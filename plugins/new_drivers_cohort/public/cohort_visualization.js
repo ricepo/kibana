@@ -11,8 +11,8 @@ import dateMath from '@elastic/datemath';
 import { timefilter } from 'ui/timefilter';
 
 const api = {
-  driversCreated: '../api/new_drivers_cohort/driversCreated',
-  query:          '../api/new_drivers_cohort/query'
+  query:          '../api/new_drivers_cohort/query',
+  getDrivers:     '../api/new_drivers_cohort/getDrivers'
 };
 
 /* Options for the loading spinner */
@@ -89,49 +89,39 @@ export class NewDriversCohortVisualizationProvider{
     const begin = moment.now();
 
     /**
-     * regardless of suspended
+     * find all drivers and regardless of suspended
      */
-    const [acc1,acc2] = await Promise.all([
-      getAccounts({params:{ role: 'region.driver' }}),
-      getAccounts({params:{ role: 'region.driver',suspended:true }})
-    ]);
-    const accounts = [].concat(acc1,acc2);
-
-    let newCreatedDrivers = _.chain(accounts)
-      .filter(a => {
-        const order1 = _.get(a,'milestone.order1',null);
-        return order1 && moment(order1).isBetween(from, to)
-      })
-      .map(m => {
-
-        let regionName = '';
-
-        _.forEach(m.roles, f => {
-
-          if (f.name === 'region.driver') {
-            regionName = f.description;
+    let accounts = await getDataFromEs(api.getDrivers, {
+      from,
+      to,
+      region,
+      aggs: {
+        id: {
+          terms: {
+            field: '_id',
+            order: { _count: 'desc' },
+            size:  10000
+          },
+          aggs: {
+            order1: {
+              terms: {
+                field: 'milestone.order1',
+                order: { _count: 'desc' },
+                size:  10000
+              }
+            }
           }
-        });
-
-        return {
-          id: m._id,
-          order1: m.milestone.order1,
-          regionName
-        };
-      })
+        }
+      }
+    });
+    accounts = _.get(accounts, 'data.aggregations.id.buckets');
+    
+    const newCreatedDrivers = _.chain(accounts)
+      .map(v => ({
+        id: v.key,
+        order1: v.order1.buckets[0].key_as_string,
+      }))
       .value();
-
-    if (region) {
-      if (!_.isArray(region.params)) {
-        region.params = region.params.query.split();
-      }
-
-      if (region.negate) {
-        newCreatedDrivers = _.filter(newCreatedDrivers, n => !_.includes(region.params, n.regionName));
-      } else {
-        newCreatedDrivers = _.filter(newCreatedDrivers, n => _.includes(region.params, n.regionName));
-      }
-    }
 
     const newCreatedDriverId = _.map(newCreatedDrivers, 'id');
     if (!newCreatedDriverId.length) {
@@ -194,6 +184,7 @@ export class NewDriversCohortVisualizationProvider{
         formatUnit = 'isoWeek'
         break;
     }
+
     params.drivers = ordersDrivers;
     params.aggs = {
       createdAt: {
