@@ -71,4 +71,70 @@ export default function (server) {
       return response;
     }
   });
+
+
+
+  /**
+   * query drivers
+   */
+  server.route({
+    path:    '/api/driver_weeekly_report/getDrivers',
+    method:  'POST',
+    handler: async(req) => {
+
+      const { from, to, region, aggs } = req.payload;
+      const searchRequest = {
+        index: 'accounts',
+        size:  0,
+        body:  {
+          _source: {
+            include: []
+          },
+          query: {
+            bool: {
+              filter: [
+                {
+                  match_phrase: {
+                    "roles.name.keyword": {
+                      query: "region.driver"
+                    }
+                  }
+                },
+                { range: { "milestone.order1": { gte: from, lte: to } } }
+              ],
+              must_not: []
+            }
+          },
+          aggs
+        }
+      };
+      if (region) {
+        if (!_.isArray(region.params)) {
+          region.params = region.params.query.split();
+        }
+        const should = _.map(region.params,v => ({
+          match_phrase: {
+            "roles.description.keyword": v
+          }
+        }))
+        const obj = {
+          bool:{
+            should,
+            minimum_should_match: 1
+          }
+        }
+        if (region.negate) {
+          searchRequest.body.query.bool.must_not.push(obj);
+        } else {
+          searchRequest.body.query.bool.filter.push(obj);
+        }
+      }
+
+      /* this is the way to get data from elasticsearch directly */
+      const { callWithRequest } = server.plugins.elasticsearch.getCluster('data');
+      const response = await callWithRequest(req, 'search', searchRequest);
+
+      return response;
+    }
+  });
 }
