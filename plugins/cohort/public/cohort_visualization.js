@@ -68,6 +68,19 @@ export class CohortVisualizationProvider {
       .get('0')
       .value();
 
+    const restaurants = _.chain(this.vis.searchSource._fields.filter)
+      .filter(v => !v.meta.disabled && v.meta.key === 'restaurant._id')
+      .map(x => ({
+        negate: x.meta.negate,
+        params: x.meta.params
+      }))
+      .get('0')
+      .value();  
+
+      console.log('this.vis.searchSource._fields.filter ======>',this.vis.searchSource._fields.filter)
+      console.log('restaurants =======>',restaurants)
+      console.log('region =======>',region)
+
     let interval = null;
     let period = null;
     switch (visParams.period) {
@@ -132,7 +145,7 @@ export class CohortVisualizationProvider {
     _.map(esData, (d, day) => {
 
       /* Get number of new customers for the date */
-      const newCust = _.filter(d, [ 'orderCount', 0 ]);
+      const newCust = _.unionBy(d, '_id');
       const active = _(esData)
         .slice(day + 1) // Get the customer from date after init date
         .map(x => _.intersectionBy(newCust, x, '_id').length)

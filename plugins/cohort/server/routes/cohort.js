@@ -11,7 +11,7 @@ export default function(server) {
     method:  'POST',
     handler: async(req) => {
 
-      const { from, to, region, interval } = req.payload;
+      const { from, to, region, interval, restaurants } = req.payload;
       const searchRequest = {
         index: 'orders',
         size:  0,
@@ -21,7 +21,8 @@ export default function(server) {
             bool: {
               filter: [
                 { term:  { status: 'confirmed' } },
-                { range: { createdAt: { gt: from, lte: to } } }
+                { range: { createdAt: { gt: from, lte: to } } },
+                { terms:  { 'restaurant._id': ['5a10d76da0989c0014fe471d'] } }
               ],
               must_not: [{ term:  { 'restaurant.fake': true } }]
             }
@@ -64,6 +65,18 @@ export default function(server) {
           searchRequest.body.query.bool.must_not.push({ terms:  { 'region.name': region.params } });
         } else {
           searchRequest.body.query.bool.filter.push({ terms:  { 'region.name': region.params } });
+        }
+      }
+
+      if (restaurants) {
+        if (!_.isArray(restaurants.params)) {
+          restaurants.params = restaurants.params.query.split();
+        }
+
+        if (restaurants.negate) {
+          searchRequest.body.query.bool.must_not.push({ terms:  { 'restaurant._id': restaurants.params } });
+        } else {
+          searchRequest.body.query.bool.filter.push({ terms:  { 'restaurant._id': restaurants.params } });
         }
       }
 
