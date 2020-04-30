@@ -2,13 +2,11 @@
 import { visFactory } from 'ui/vis/vis_factory';
 import { Schemas } from 'ui/vis/editors/default/schemas';
 import { Status } from 'ui/vis/update_status';
-import { setup } from '../../../src/legacy/core_plugins/visualizations/public/np_ready/public/legacy'
+import { setup } from '../../../src/legacy/core_plugins/visualizations/public/np_ready/public/legacy';
 
 import { BranchReportVisualizationProvider } from './branch_report_visualization';
 
-
-export default function BranchReportProvider(Private) {
-
+export default function BranchReportProvider() {
   return visFactory.createBaseVisualization({
     name: 'branch_report',
     title: 'Branch Report',
@@ -16,8 +14,7 @@ export default function BranchReportProvider(Private) {
     description: 'Branch Report',
     visualization: BranchReportVisualizationProvider,
     visConfig: {
-      defaults: {
-      },
+      defaults: {},
     },
     requiresUpdateStatus: [
       // Check for changes in the aggregation configuration for the visualization
@@ -31,7 +28,7 @@ export default function BranchReportProvider(Private) {
       // Check if the time range for the visualization has been changed
       Status.TIME,
       // Check if the UI state of the visualization has been changed
-      Status.UI_STATE
+      Status.UI_STATE,
     ],
     hierarchicalData: true,
     editorConfig: {
@@ -43,10 +40,8 @@ export default function BranchReportProvider(Private) {
           max: 1,
           min: 1,
           aggFilter: ['count', 'sum', 'avg', 'cardinality'],
-          defaults: [
-            { type: 'count', schema: 'metric' },
-          ],
-        }
+          defaults: [{ type: 'count', schema: 'metric' }],
+        },
       ]),
     },
   });

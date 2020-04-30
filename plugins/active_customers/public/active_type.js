@@ -4,11 +4,9 @@ import { Schemas } from 'ui/vis/editors/default/schemas';
 
 import { ActiveVisualizationProvider } from './active_visualization';
 import { Status } from 'ui/vis/update_status';
-import { setup } from '../../../src/legacy/core_plugins/visualizations/public/np_ready/public/legacy'
+import { setup } from '../../../src/legacy/core_plugins/visualizations/public/np_ready/public/legacy';
 
-
-export default function ActiveTypeProvider(Private) {
-
+export default function ActiveTypeProvider() {
   return visFactory.createBaseVisualization({
     name: 'active_customers',
     title: 'active customers',
@@ -16,9 +14,7 @@ export default function ActiveTypeProvider(Private) {
     description: ' Total / Monthly / Weekly Active Customers',
     visualization: ActiveVisualizationProvider,
     visConfig: {
-      defaults: {
-        
-      },
+      defaults: {},
     },
     requiresUpdateStatus: [
       // Check for changes in the aggregation configuration for the visualization
@@ -32,7 +28,7 @@ export default function ActiveTypeProvider(Private) {
       // Check if the time range for the visualization has been changed
       Status.TIME,
       // Check if the UI state of the visualization has been changed
-      Status.UI_STATE
+      Status.UI_STATE,
     ],
     hierarchicalData: true,
     editorConfig: {
@@ -43,11 +39,10 @@ export default function ActiveTypeProvider(Private) {
           title: 'Total',
           max: 1,
           min: 1,
-          aggFilter: ['count', 'sum', 'avg','cardinality'],
-          defaults: [
-            { type: 'count', schema: 'metric' },
-          ],
-        }, {
+          aggFilter: ['count', 'sum', 'avg', 'cardinality'],
+          defaults: [{ type: 'count', schema: 'metric' }],
+        },
+        {
           group: 'buckets',
           name: 'active_date',
           title: 'Active Date',
@@ -56,13 +51,15 @@ export default function ActiveTypeProvider(Private) {
           aggFilter: ['date_histogram', 'terms'],
           defaults: [
             {
-              type: 'date_histogram', schema: 'active_date', params: {
+              type: 'date_histogram',
+              schema: 'active_date',
+              params: {
                 interval: 'd',
                 orderBy: '_term',
               },
             },
           ],
-        }
+        },
       ]),
     },
   });

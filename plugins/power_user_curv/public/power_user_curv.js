@@ -2,12 +2,11 @@
 import { visFactory } from 'ui/vis/vis_factory';
 import { Schemas } from 'ui/vis/editors/default/schemas';
 import { Status } from 'ui/vis/update_status';
-import { setup } from '../../../src/legacy/core_plugins/visualizations/public/np_ready/public/legacy'
+import { setup } from '../../../src/legacy/core_plugins/visualizations/public/np_ready/public/legacy';
 
 import { PowerUserCurvVisualizationProvider } from './power_user_curv_visualization';
 
 export default function PowerUserCurveProvider(Private) {
-
   return visFactory.createBaseVisualization({
     name: 'power_user_curv',
     title: 'Power User Curv',
@@ -15,9 +14,7 @@ export default function PowerUserCurveProvider(Private) {
     description: 'Number of Uniq Active Customer',
     visualization: PowerUserCurvVisualizationProvider,
     visConfig: {
-      defaults: {
-
-      },
+      defaults: {},
     },
     requiresUpdateStatus: [
       // Check for changes in the aggregation configuration for the visualization
@@ -31,7 +28,7 @@ export default function PowerUserCurveProvider(Private) {
       // Check if the time range for the visualization has been changed
       Status.TIME,
       // Check if the UI state of the visualization has been changed
-      Status.UI_STATE
+      Status.UI_STATE,
     ],
     hierarchicalData: true,
     editorConfig: {
@@ -42,11 +39,10 @@ export default function PowerUserCurveProvider(Private) {
           title: 'Total',
           max: 1,
           min: 1,
-          aggFilter: ['count', 'sum', 'avg','cardinality'],
-          defaults: [
-            { type: 'count', schema: 'metric' },
-          ],
-        }, {
+          aggFilter: ['count', 'sum', 'avg', 'cardinality'],
+          defaults: [{ type: 'count', schema: 'metric' }],
+        },
+        {
           group: 'buckets',
           name: 'active_date',
           title: 'Active Date',
@@ -55,13 +51,15 @@ export default function PowerUserCurveProvider(Private) {
           aggFilter: ['date_histogram', 'terms'],
           defaults: [
             {
-              type: 'date_histogram', schema: 'active_date', params: {
+              type: 'date_histogram',
+              schema: 'active_date',
+              params: {
                 interval: 'd',
                 orderBy: '_term',
               },
             },
           ],
-        }
+        },
       ]),
     },
   });

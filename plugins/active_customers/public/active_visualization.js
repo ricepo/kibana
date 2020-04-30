@@ -7,9 +7,10 @@ import 'spin.js/spin.css';
 import dateMath from '@elastic/datemath';
 import { timefilter } from 'ui/timefilter';
 import { showChart } from './utils';
+import { buildEsQuery } from '@kbn/es-query';
 
 /* Options for the loading spinner */
- const opts = {
+const opts = {
   lines: 13, // The number of lines to draw
   length: 38, // The length of each line
   width: 17, // The line thickness
@@ -27,12 +28,10 @@ import { showChart } from './utils';
   top: '50%', // Top position relative to parent
   left: '50%', // Left position relative to parent
   shadow: '0 0 1px transparent', // Box-shadow for the lines
-  position: 'absolute' // Element positioning
+  position: 'absolute', // Element positioning
 };
 
-
 export class ActiveVisualizationProvider {
-
   containerId = 'active-customers-container';
   margin = { top: 20, right: 20, bottom: 40, left: 50 };
 
@@ -45,7 +44,6 @@ export class ActiveVisualizationProvider {
   }
 
   async render(visData, visParams, status) {
-
     if (!(status.time || status.data)) return;
 
     if (!this.container) return;
@@ -53,58 +51,59 @@ export class ActiveVisualizationProvider {
 
     const spinner = new Spinner(opts).spin(this.container);
 
+    /**
+     * get the filters from filter bar
+     */
+    let filters = this.vis.searchSource._fields.filter;
+    const querys = this.vis.searchSource._fields.query;
+
+    filters = _.filter(filters, v => !v.meta.disabled);
+
     /* get timeRange */
     /* format dateTime by timezone such as "now/d"(datemath) */
     const from = dateMath.parse(timefilter.getTime().from).format();
     const to = dateMath.parse(timefilter.getTime().to, { roundUp: true }).format();
 
-    /* get filters */
-    const region = _.chain(this.vis.searchSource._fields.filter)
-      .filter(v => !v.meta.disabled && v.meta.key === 'region.name')
-      .map(x => {
-        return {
-          negate: x.meta.negate,
-          params: x.meta.params
-        }
-      })
-      .get('0')
-      .value();
+    const range = { range: { createdAt: { gt: from, lte: to } } };
+    const { bool } = buildEsQuery(undefined, querys, filters);
+
+    bool.filter.push(range);
+    console.log('bool   ======>', bool);
+
+    const query = { bool };
 
     const params = {
-      from,
-      to,
-      region
+      query,
     };
 
     const begin = moment();
     /* requset es(elasticsearch) */
-    let esData = await getDataFromEs(params)
+    let esData = await getDataFromEs(params);
     const pullDataEnd = moment.now();
-    console.log(`获取数据共花费${(pullDataEnd - begin) / 1000}s`)
-    esData = _.get(esData,'data.aggregations.createdAt.buckets')
+    console.log(`获取数据共花费${(pullDataEnd - begin) / 1000}s`);
+    esData = _.get(esData, 'data.aggregations.createdAt.buckets');
 
-    if(!esData.length){
+    if (!esData.length) {
       spinner.stop();
-      return
+      return;
     }
 
-    let data = {
-      potential:[],
-      monthly:[],
-      weekly:[],
-      daily:[],
-      xAxis:[]
-    }
+    const data = {
+      potential: [],
+      monthly: [],
+      weekly: [],
+      daily: [],
+      xAxis: [],
+    };
 
     let total = [];
-    console.log(esData)
+    console.log(esData);
     for (let i = 0; i < esData.length; i++) {
-
       /* get xAxis */
-      data.xAxis.push(moment(esData[i]['key_as_string']).format('YYYY/MM/DD'));
+      data.xAxis.push(moment(esData[i].key_as_string).format('YYYY/MM/DD'));
 
       /* Customer array in current week */
-      const customers = esData[i]['customers']['buckets'];
+      const customers = esData[i].customers.buckets;
 
       /* Total active customers */
       total = _.unionBy(total, customers, 'key');
@@ -114,7 +113,7 @@ export class ActiveVisualizationProvider {
       let weekly = [];
 
       for (let j = 0; j < 7; j++) {
-        weekly = _.unionBy(weekly, _.get(esData, [i - j,'customers','buckets']), 'key');
+        weekly = _.unionBy(weekly, _.get(esData, [i - j, 'customers', 'buckets']), 'key');
       }
 
       data.weekly.push(weekly.length);
@@ -123,7 +122,7 @@ export class ActiveVisualizationProvider {
       let monthly = [];
 
       for (let j = 0; j < 30; j++) {
-        monthly = _.unionBy(monthly, _.get(esData, [i - j,'customers','buckets']), 'key');
+        monthly = _.unionBy(monthly, _.get(esData, [i - j, 'customers', 'buckets']), 'key');
       }
 
       data.monthly.push(monthly.length);
@@ -140,31 +139,30 @@ export class ActiveVisualizationProvider {
 
     spinner.stop();
     const end = moment.now();
-    console.log(`处理数据共花费${(end - pullDataEnd) / 1000}s`)
-    console.log(`一共花费${(end - begin) / 1000}s`)
-    showChart(measures,this.containerId,data);
+    console.log(`处理数据共花费${(end - pullDataEnd) / 1000}s`);
+    console.log(`一共花费${(end - begin) / 1000}s`);
+    showChart(measures, this.containerId, data);
   }
 
   destroy() {
     this.container.parentNode.removeChild(this.container);
     this.container = null;
   }
-
-};
+}
 
 /**
  * get data directly from es
  * @param {Object} (filters and timeRange from kibana)
  */
-async function getDataFromEs(params){
+async function getDataFromEs(params) {
   return await axios({
     method: 'post',
     url: '../api/active-customers/query',
     data: {
-      ...params
+      ...params,
     },
-    headers:{
-      'kbn-version': '7.5.2'
-    }
+    headers: {
+      'kbn-version': '7.5.2',
+    },
   });
 }

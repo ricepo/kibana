@@ -7,7 +7,7 @@ import { timefilter } from 'ui/timefilter';
 import { showChart } from './util';
 import { Spinner } from 'spin.js';
 import 'spin.js/spin.css';
-
+import { buildEsQuery } from '@kbn/es-query';
 
 /* Options for the loading spinner */
 const opts = {
@@ -28,13 +28,10 @@ const opts = {
   top: '50%', // Top position relative to parent
   left: '50%', // Left position relative to parent
   shadow: '0 0 1px transparent', // Box-shadow for the lines
-  position: 'absolute' // Element positioning
+  position: 'absolute', // Element positioning
 };
 
-
-
 export class PowerUserCurvVisualizationProvider {
-
   containerId = 'power-user-curv-container';
   margin = { top: 20, right: 20, bottom: 40, left: 50 };
 
@@ -47,7 +44,6 @@ export class PowerUserCurvVisualizationProvider {
   }
 
   async render(visData, visParams, status) {
-
     if (!(status.time || status.data)) return;
 
     if (!this.container) return;
@@ -56,49 +52,48 @@ export class PowerUserCurvVisualizationProvider {
 
     const spinner = new Spinner(opts).spin(this.container);
 
+    /**
+     * get the filters from filter bar
+     */
+    let filters = this.vis.searchSource._fields.filter;
+    const querys = this.vis.searchSource._fields.query;
+
+    filters = _.filter(filters, v => !v.meta.disabled);
 
     /* get timeRange */
     /* format dateTime by timezone such as "now/d"(datemath) */
     const from = dateMath.parse(timefilter.getTime().from).format();
     const to = dateMath.parse(timefilter.getTime().to, { roundUp: true }).format();
 
-    /* get filters */
-    const region = _.chain(this.vis.searchSource._fields.filter)
-      .filter(v => !v.meta.disabled && v.meta.key === 'region.name')
-      .map(x => {
-        return {
-          negate: x.meta.negate,
-          params: x.meta.params
-        };
-      })
-      .get('0')
-      .value();
+    const range = { range: { createdAt: { gt: from, lte: to } } };
+    const { bool } = buildEsQuery(undefined, querys, filters);
+
+    bool.filter.push(range);
+    console.log('bool   ======>', bool);
+
+    const query = { bool };
 
     const params = {
-      from,
-      to,
-      region
+      query,
     };
 
     /* requset es(elasticsearch) */
     let esData = await getDataFromEs(params);
     esData = _.get(esData, 'data.aggregations.createdAt.buckets');
 
-
-    if(!esData.length) {
+    if (!esData.length) {
       spinner.stop();
       return;
     }
 
     /* format the data from es */
-    const data  = _.chain(esData)
+    const data = _.chain(esData)
       .map(v => v.customers.buckets)
       .flatten()
       .groupBy('key')
       .map((v, k) => ({ _id: k, count: _.sumBy(v, 'doc_count') }))
       .groupBy(v => v.count)
       .value();
-
 
     /* get xAxis and yAxis */
     data.xAxis = _.keys(data);
@@ -118,23 +113,21 @@ export class PowerUserCurvVisualizationProvider {
     this.container.parentNode.removeChild(this.container);
     this.container = null;
   }
-
-};
+}
 
 /**
  * get data directly from es
  * @param {Object} (filters and timeRange from kibana)
  */
 async function getDataFromEs(params) {
-
   return await axios({
     method: 'post',
     url: '../api/power_user_curv/query',
     data: {
-      ...params
+      ...params,
     },
-    headers:{
-      'kbn-version': '7.5.2'
-    }
+    headers: {
+      'kbn-version': '7.5.2',
+    },
   });
 }

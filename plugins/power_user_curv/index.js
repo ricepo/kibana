@@ -1,13 +1,11 @@
 import powerCurvRoute from './server/routes/power_user_curv';
 
-export default function (kibana) {
+export default function(kibana) {
   return new kibana.Plugin({
     require: ['elasticsearch'],
     name: 'power_user_curv',
     uiExports: {
-      hacks: [
-        'plugins/power_user_curv/power_user_curv'
-      ],
+      hacks: ['plugins/power_user_curv/power_user_curv'],
     },
 
     config(Joi) {
@@ -16,9 +14,10 @@ export default function (kibana) {
       }).default();
     },
 
-    init(server, options) { // eslint-disable-line no-unused-vars
+    init(server, options) {
+      // eslint-disable-line no-unused-vars
       // Add server routes and initialize the plugin here
       powerCurvRoute(server);
-    }
+    },
   });
 }
