@@ -1,45 +1,43 @@
 import _ from 'lodash';
 
-export default function (server) {
-
+export default function(server) {
   server.route({
     path: '/api/power_user_curv/query',
-    method: "POST",
-    handler: async (req)=>{
-
-      const { query } = req.payload
+    method: 'POST',
+    handler: async req => {
+      const { query } = req.payload;
       const searchRequest = {
-        index:"orders",
-        size:0,
-        body:{
+        index: 'orders',
+        size: 0,
+        body: {
           _source: {
-            include: []
+            include: [],
           },
           query,
-          "aggs": {
-            "createdAt": {
-              "date_histogram": {
-                "field": "createdAt",
-                "interval": "1d",
-                "time_zone": "America/Los_Angeles",
-                "min_doc_count": 1
+          aggs: {
+            createdAt: {
+              date_histogram: {
+                field: 'createdAt',
+                interval: '1d',
+                time_zone: 'America/Los_Angeles',
+                min_doc_count: 1,
               },
-              "aggs": {
-                "customers": {
-                  "terms": {
-                    "field": "customer._id",
-                    "size": 1000000,
-                    "order": {
-                      "_count": "desc"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
+              aggs: {
+                customers: {
+                  terms: {
+                    field: 'customer._id',
+                    size: 1000000,
+                    order: {
+                      _count: 'desc',
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
       };
-      
+
       /* this is the way to get data from elasticsearch directly */
       const { callWithRequest } = server.plugins.elasticsearch.getCluster('data');
       const response = await callWithRequest(req, 'search', searchRequest);
@@ -47,6 +45,6 @@ export default function (server) {
       /* just like GET orders/_count   */
       // const response = await callWithRequest(req,'count');
       return response;
-    }
+    },
   });
 }

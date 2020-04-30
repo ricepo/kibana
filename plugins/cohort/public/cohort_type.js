@@ -6,10 +6,9 @@ import { CohortVisualizationProvider } from './cohort_visualization';
 import './cohort.less';
 import optionsTemplate from './options_template.html';
 import { Status } from 'ui/vis/update_status';
-import { setup } from '../../../src/legacy/core_plugins/visualizations/public/np_ready/public/legacy'
+import { setup } from '../../../src/legacy/core_plugins/visualizations/public/np_ready/public/legacy';
 
-export default function CohortTypeProvider(Private) {
-
+export default function CohortTypeProvider() {
   return visFactory.createBaseVisualization({
     name: 'cohort',
     title: 'Cohort Analysis',
@@ -21,7 +20,7 @@ export default function CohortTypeProvider(Private) {
         percentual: true,
         table: true,
         mapColors: 'heatmap',
-        period: 'daily'
+        period: 'daily',
       },
     },
     requiresUpdateStatus: [
@@ -36,7 +35,7 @@ export default function CohortTypeProvider(Private) {
       // Check if the time range for the visualization has been changed
       Status.TIME,
       // Check if the UI state of the visualization has been changed
-      Status.UI_STATE
+      Status.UI_STATE,
     ],
     hierarchicalData: true,
     editorConfig: {
@@ -48,11 +47,9 @@ export default function CohortTypeProvider(Private) {
           title: 'Total',
           max: 1,
           min: 1,
-          aggFilter: ['count', 'sum', 'avg','cardinality'],
-          defaults: [
-            { type: 'count', schema: 'metric' },
-          ],
-        }
+          aggFilter: ['count', 'sum', 'avg', 'cardinality'],
+          defaults: [{ type: 'count', schema: 'metric' }],
+        },
       ]),
     },
   });

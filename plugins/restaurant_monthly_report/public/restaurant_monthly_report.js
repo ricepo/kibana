@@ -4,10 +4,9 @@ import { Schemas } from 'ui/vis/editors/default/schemas';
 
 import { RestaurnatMonthlyReportVisualizationProvider } from './restaurant_monthly_report_visualization';
 import { Status } from 'ui/vis/update_status';
-import { setup } from '../../../src/legacy/core_plugins/visualizations/public/np_ready/public/legacy'
+import { setup } from '../../../src/legacy/core_plugins/visualizations/public/np_ready/public/legacy';
 
 export default function RestaurantMonthlyReportProvider(Private) {
-
   return visFactory.createBaseVisualization({
     name: 'restaurant monthly report',
     title: 'Restaurant monthly Report',
@@ -15,8 +14,7 @@ export default function RestaurantMonthlyReportProvider(Private) {
     description: 'New Restaurant Number and Orders Number',
     visualization: RestaurnatMonthlyReportVisualizationProvider,
     visConfig: {
-      defaults: {
-      },
+      defaults: {},
     },
     requiresUpdateStatus: [
       // Check for changes in the aggregation configuration for the visualization
@@ -30,7 +28,7 @@ export default function RestaurantMonthlyReportProvider(Private) {
       // Check if the time range for the visualization has been changed
       Status.TIME,
       // Check if the UI state of the visualization has been changed
-      Status.UI_STATE
+      Status.UI_STATE,
     ],
     hierarchicalData: true,
     editorConfig: {
@@ -41,11 +39,9 @@ export default function RestaurantMonthlyReportProvider(Private) {
           title: 'Total',
           max: 1,
           min: 1,
-          aggFilter: ['count', 'sum', 'avg','cardinality'],
-          defaults: [
-            { type: 'count', schema: 'metric' },
-          ],
-        }
+          aggFilter: ['count', 'sum', 'avg', 'cardinality'],
+          defaults: [{ type: 'count', schema: 'metric' }],
+        },
       ]),
     },
   });

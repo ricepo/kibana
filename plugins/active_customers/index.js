@@ -1,13 +1,11 @@
 import activeRoute from './server/routes/active';
 
-export default function (kibana) {
+export default function(kibana) {
   return new kibana.Plugin({
     require: ['elasticsearch'],
     name: 'active_customers',
     uiExports: {
-      hacks: [
-        'plugins/active_customers/active_type'
-      ],
+      hacks: ['plugins/active_customers/active_type'],
     },
 
     config(Joi) {
@@ -16,9 +14,10 @@ export default function (kibana) {
       }).default();
     },
 
-    init(server, options) { // eslint-disable-line no-unused-vars
+    init(server, options) {
+      // eslint-disable-line no-unused-vars
       // Add server routes and initialize the plugin here
       activeRoute(server);
-    }
+    },
   });
 }

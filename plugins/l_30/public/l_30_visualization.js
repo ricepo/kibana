@@ -28,12 +28,10 @@ const opts = {
   top: '50%', // Top position relative to parent
   left: '50%', // Left position relative to parent
   shadow: '0 0 1px transparent', // Box-shadow for the lines
-  position: 'absolute' // Element positioning
+  position: 'absolute', // Element positioning
 };
 
-
 export class L30CurvVisualizationProvider {
-
   containerId = 'power-user-curv-container';
   margin = { top: 20, right: 20, bottom: 40, left: 50 };
 
@@ -46,7 +44,6 @@ export class L30CurvVisualizationProvider {
   }
 
   async render(visData, visParams, status) {
-
     if (!(status.time || status.data)) return;
 
     if (!this.container) return;
@@ -58,34 +55,33 @@ export class L30CurvVisualizationProvider {
     /**
      * get the filters from filter bar
      */
-    let filters = this.vis.searchSource._fields.filter
-    const querys = this.vis.searchSource._fields.query
+    let filters = this.vis.searchSource._fields.filter;
+    const querys = this.vis.searchSource._fields.query;
 
-    filters = _.filter(filters,v => !v.meta.disabled)
-    
+    filters = _.filter(filters, v => !v.meta.disabled);
+
     /* get timeRange */
     /* format dateTime by timezone such as "now/d"(datemath) */
     const from = dateMath.parse(timefilter.getTime().from).format();
     const to = dateMath.parse(timefilter.getTime().to, { roundUp: true }).format();
 
     const range = { range: { createdAt: { gt: from, lte: to } } };
-    const {bool} = buildEsQuery(undefined, querys, filters);
+    const { bool } = buildEsQuery(undefined, querys, filters);
 
-    bool.filter.push(range)
-    console.log('bool   ======>',bool)
+    bool.filter.push(range);
+    console.log('bool   ======>', bool);
 
-    const query = {bool}
+    const query = { bool };
 
     const params = {
-      query
+      query,
     };
 
     /* requset es(elasticsearch) */
     let esData = await getDataFromEs(params);
     esData = _.get(esData, 'data.aggregations.createdAt.buckets');
 
-
-    if(!esData.length) {
+    if (!esData.length) {
       spinner.stop();
       return;
     }
@@ -97,18 +93,16 @@ export class L30CurvVisualizationProvider {
     const result = _.times(days + 1, _.constant(0));
 
     /* format the data from es */
-    const data  = _.chain(esData)
+    const data = _.chain(esData)
       .map(v => v.customers.buckets)
       .flatten()
       .groupBy('key')
       .map((v, k) => ({ _id: k, count: v.length }))
       .groupBy(v => v.count)
       .each((v, k) => {
-
         result[k - 1] = v.length;
       })
       .value();
-
 
     /* get xAxis and yAxis */
     data.xAxis = _.range(1, days + 2);
@@ -128,24 +122,21 @@ export class L30CurvVisualizationProvider {
     this.container.parentNode.removeChild(this.container);
     this.container = null;
   }
-
-};
-
+}
 
 /**
  * get data directly from es
  * @param {Object} (filters and timeRange from kibana)
  */
 async function getDataFromEs(params) {
-
   return await axios({
     method: 'post',
     url: '../api/l_30/query',
     data: {
-      ...params
+      ...params,
     },
-    headers:{
-      'kbn-version': '7.5.2'
-    }
+    headers: {
+      'kbn-version': '7.5.2',
+    },
   });
 }

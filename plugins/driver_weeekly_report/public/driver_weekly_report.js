@@ -3,11 +3,9 @@ import { visFactory } from 'ui/vis/vis_factory';
 import { Schemas } from 'ui/vis/editors/default/schemas';
 
 import { DriverWeeklyReportVisualizationProvider } from './driver_weekly_report_visualization';
-import { setup } from '../../../src/legacy/core_plugins/visualizations/public/np_ready/public/legacy'
-
+import { setup } from '../../../src/legacy/core_plugins/visualizations/public/np_ready/public/legacy';
 
 export default function DriverWeeklyReportProvider(Private) {
-
   return visFactory.createBaseVisualization({
     name: 'driver_weeekly_report',
     title: 'Driver Weekly Report',
@@ -15,9 +13,7 @@ export default function DriverWeeklyReportProvider(Private) {
     description: 'Driver Weekly Report',
     visualization: DriverWeeklyReportVisualizationProvider,
     visConfig: {
-      defaults: {
-
-      },
+      defaults: {},
     },
     hierarchicalData: true,
     editorConfig: {
@@ -29,10 +25,8 @@ export default function DriverWeeklyReportProvider(Private) {
           max: 1,
           min: 1,
           aggFilter: ['count', 'sum', 'avg', 'cardinality'],
-          defaults: [
-            { type: 'count', schema: 'metric' },
-          ],
-        }
+          defaults: [{ type: 'count', schema: 'metric' }],
+        },
       ]),
     },
   });

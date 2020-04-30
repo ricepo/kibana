@@ -9,7 +9,7 @@ const yellow = '#ffef7d';
 const green = '#32c77c';
 const colors = [red, yellow, green];
 const formatTypes = {
-  undefined: (d) => d,
+  undefined: d => d,
   custom: d3.time.format('%Y/%m/%d %H:%M:%S'),
   auto: d3.time.format('%Y/%m/%d %H:%M:%S'),
   ms: d3.time.format('%Y/%m/%d %H:%M:%S,%L'),
@@ -26,22 +26,22 @@ const formatTypes = {
  * @param {number} v
  * @returns {number}
  */
-export const round = (v) => Math.round(v * 100) / 100;
+export const round = v => Math.round(v * 100) / 100;
 /**
  * @param {object} d
  * @returns {number}
  */
-export const cumulativeFn = (d) => d.cumulativeValue;
+export const cumulativeFn = d => d.cumulativeValue;
 /**
  * @param {object} d
  * @returns {number}
  */
-export const absoluteFn = (d) => d.value;
+export const absoluteFn = d => d.value;
 /**
  * @param {string} dateHistogram
  * @returns {function}
  */
-export const getFormatTypes = (dateHistogram) => formatTypes[dateHistogram];
+export const getFormatTypes = dateHistogram => formatTypes[dateHistogram];
 
 /**
  * @param {string} mapColors
@@ -52,8 +52,11 @@ export const getFormatTypes = (dateHistogram) => formatTypes[dateHistogram];
  */
 export function showTable(mapColors, dateHistogram, element, data, valueFn) {
   const minMaxesForColumn = [];
-  const periodMeans = d3.nest().key((d) => d.period)
-    .entries(data).map((d) => {
+  const periodMeans = d3
+    .nest()
+    .key(d => d.period)
+    .entries(data)
+    .map(d => {
       const minMax = d3.extent(d.values, valueFn);
       const mean = round(d3.mean(d.values, valueFn));
       const minMaxObj = {
@@ -65,69 +68,82 @@ export function showTable(mapColors, dateHistogram, element, data, valueFn) {
       return mean;
     });
   const customColumn = dateHistogram ? 'Date' : 'Term';
-  const fixedColumns = [customColumn,'Total'];
-  const columns = d3.map(data, (d) => d.period).keys().map(x => parseInt(x, 10));
+  const fixedColumns = [customColumn, 'Total'];
+  const columns = d3
+    .map(data, d => d.period)
+    .keys()
+    .map(x => parseInt(x, 10));
   const allColumns = fixedColumns.concat(columns);
-  
+
   /* Initialize the table */
   const del = d3.select(element).selectAll('table');
   del.remove();
 
-  const table = d3.select(element).append('table')
+  const table = d3
+    .select(element)
+    .append('table')
     .attr('class', tableClassName);
 
   const thead = table.append('thead');
   const tbody = table.append('tbody');
   const tfoot = table.append('tfoot');
 
-  thead.append('tr')
+  thead
+    .append('tr')
     .selectAll('th')
     .data(allColumns)
     .enter()
     .append('th')
-    .text((column) => column);
+    .text(column => column);
 
-  const groupedData = d3.nest().key((d) => d.date).entries(data);
-  const rows = tbody.selectAll('tr')
+  const groupedData = d3
+    .nest()
+    .key(d => d.date)
+    .entries(data);
+  const rows = tbody
+    .selectAll('tr')
     .data(groupedData)
     .enter()
     .append('tr');
 
   const colorScale = getColorScale(mapColors, data, valueFn);
 
-  rows.selectAll('td')
-    .data((row) => {
+  rows
+    .selectAll('td')
+    .data(row => {
       const date = row.key;
       let total = 0;
-      const vals = columns.map((period) => {
-        const d = row.values.find((d) => period === d.period);
+      const vals = columns.map(period => {
+        const d = row.values.find(d => period === d.period);
         if (d) {
           total = round(d.total);
           return valueFn(d);
         }
       });
 
-      return [date,total].concat(vals);
+      return [date, total].concat(vals);
     })
     .enter()
     .append('td')
     .style('background-color', (d, i) => {
-      if (i >= 2) { // skip first and second columns
+      if (i >= 2) {
+        // skip first and second columns
         return colorScale(d, minMaxesForColumn[i - 2]);
       }
     })
-    .text((d) => d);
+    .text(d => d);
 
-  const meanOfMeans = round(d3.mean(periodMeans, (meanObj) => meanObj));
+  const meanOfMeans = round(d3.mean(periodMeans, meanObj => meanObj));
   const meanOfMeansTittle = `Mean (${meanOfMeans})`;
   const allMeans = ['-', meanOfMeansTittle].concat(periodMeans);
 
-  tfoot.append('tr')
+  tfoot
+    .append('tr')
     .selectAll('td')
     .data(allMeans)
     .enter()
     .append('td')
-    .text((d) => d);
+    .text(d => d);
 }
 
 /**
@@ -139,8 +155,8 @@ export function showTable(mapColors, dateHistogram, element, data, valueFn) {
  */
 export function getValueFunction({ cumulative, percentual, inverse }) {
   const valueFn = cumulative ? cumulativeFn : absoluteFn;
-  const percentFn = (d) => d.total === 0 ? 0 : round((valueFn(d) / d.total) * 100);
-  const inverseFn = (d) => round(100 - (valueFn(d) / d.total) * 100);
+  const percentFn = d => (d.total === 0 ? 0 : round((valueFn(d) / d.total) * 100));
+  const inverseFn = d => round(100 - (valueFn(d) / d.total) * 100);
 
   if (percentual) {
     if (inverse) {
@@ -158,7 +174,7 @@ export function getValueFunction({ cumulative, percentual, inverse }) {
  * @returns {string|undefined}
  */
 export function getDateHistogram($vis) {
-  const schema = $vis.aggs.find((agg) => agg.schema.name === 'cohort_date');
+  const schema = $vis.aggs.find(agg => agg.schema.name === 'cohort_date');
   if (schema && schema.type.name === 'date_histogram') {
     return schema.params.interval.val;
   }
@@ -172,7 +188,10 @@ export function getDateHistogram($vis) {
 export function getHeatMapColor(data, valueFn) {
   const domain = d3.extent(data, valueFn);
   domain.splice(1, 0, d3.mean(domain));
-  return d3.scale.linear().domain(domain).range(colors);
+  return d3.scale
+    .linear()
+    .domain(domain)
+    .range(colors);
 }
 
 /**
@@ -181,7 +200,10 @@ export function getHeatMapColor(data, valueFn) {
  * @returns {string}
  */
 export function getMeanColor(d, column) {
-  return d3.scale.linear().domain([column.min, column.mean, column.max]).range(colors)(d);
+  return d3.scale
+    .linear()
+    .domain([column.min, column.mean, column.max])
+    .range(colors)(d);
 }
 
 /**
@@ -213,17 +235,18 @@ export function getColorScale(mapColors, data, valueFn) {
   } else if (mapColors === 'aboveAverage') {
     return getAboveAverageColor;
   } else {
-    return () => {
-    };
+    return () => {};
   }
 }
 
 /**
  * format dateTime by timezone
- * @param {String|date} dateTime 
- * @param {String} timezone 
- * @param {String} format 
+ * @param {String|date} dateTime
+ * @param {String} timezone
+ * @param {String} format
  */
-export function formatDateTime(dateTime,timezone = "America/New_York",format){
-  return moment(datemath.parse(dateTime)).tz(timezone).format(format)
+export function formatDateTime(dateTime, timezone = 'America/New_York', format) {
+  return moment(datemath.parse(dateTime))
+    .tz(timezone)
+    .format(format);
 }

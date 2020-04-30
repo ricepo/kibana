@@ -2,12 +2,11 @@
 import { visFactory } from 'ui/vis/vis_factory';
 import { Schemas } from 'ui/vis/editors/default/schemas';
 import { Status } from 'ui/vis/update_status';
-import { setup } from '../../../src/legacy/core_plugins/visualizations/public/np_ready/public/legacy'
+import { setup } from '../../../src/legacy/core_plugins/visualizations/public/np_ready/public/legacy';
 
 import { L30CurvVisualizationProvider } from './l_30_visualization';
 
 export default function L30CurveProvider(Private) {
-
   return visFactory.createBaseVisualization({
     name: 'l_30curv',
     title: 'L-30 Curv',
@@ -15,9 +14,7 @@ export default function L30CurveProvider(Private) {
     description: 'Number of Uniq Active Customer',
     visualization: L30CurvVisualizationProvider,
     visConfig: {
-      defaults: {
-
-      },
+      defaults: {},
     },
     requiresUpdateStatus: [
       // Check for changes in the aggregation configuration for the visualization
@@ -31,7 +28,7 @@ export default function L30CurveProvider(Private) {
       // Check if the time range for the visualization has been changed
       Status.TIME,
       // Check if the UI state of the visualization has been changed
-      Status.UI_STATE
+      Status.UI_STATE,
     ],
     hierarchicalData: true,
     editorConfig: {
@@ -43,10 +40,9 @@ export default function L30CurveProvider(Private) {
           max: 1,
           min: 1,
           aggFilter: ['count', 'sum', 'avg', 'cardinality'],
-          defaults: [
-            { type: 'count', schema: 'metric' },
-          ],
-        }, {
+          defaults: [{ type: 'count', schema: 'metric' }],
+        },
+        {
           group: 'buckets',
           name: 'active_date',
           title: 'Active Date',
@@ -55,13 +51,15 @@ export default function L30CurveProvider(Private) {
           aggFilter: ['date_histogram', 'terms'],
           defaults: [
             {
-              type: 'date_histogram', schema: 'active_date', params: {
+              type: 'date_histogram',
+              schema: 'active_date',
+              params: {
                 interval: 'd',
                 orderBy: '_term',
               },
             },
           ],
-        }
+        },
       ]),
     },
   });

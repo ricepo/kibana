@@ -4,11 +4,9 @@ import { Schemas } from 'ui/vis/editors/default/schemas';
 
 import { CustomerFrequencyVisualizationProvider } from './frequency_visualization';
 import { Status } from 'ui/vis/update_status';
-import { setup } from '../../../src/legacy/core_plugins/visualizations/public/np_ready/public/legacy'
-
+import { setup } from '../../../src/legacy/core_plugins/visualizations/public/np_ready/public/legacy';
 
 export default function CustomerFrequencyTypeProvider(Private) {
-
   return visFactory.createBaseVisualization({
     name: 'customers_purchase_frequency',
     title: 'customers purchase frequency',
@@ -30,7 +28,7 @@ export default function CustomerFrequencyTypeProvider(Private) {
       // Check if the time range for the visualization has been changed
       Status.TIME,
       // Check if the UI state of the visualization has been changed
-      Status.UI_STATE
+      Status.UI_STATE,
     ],
     hierarchicalData: true,
     editorConfig: {
@@ -41,11 +39,9 @@ export default function CustomerFrequencyTypeProvider(Private) {
           title: 'Total',
           max: 1,
           min: 1,
-          aggFilter: ['count', 'sum', 'avg','cardinality'],
-          defaults: [
-            { type: 'count', schema: 'metric' },
-          ],
-        }
+          aggFilter: ['count', 'sum', 'avg', 'cardinality'],
+          defaults: [{ type: 'count', schema: 'metric' }],
+        },
       ]),
     },
   });

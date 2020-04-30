@@ -1,56 +1,56 @@
 import echarts from 'echarts';
 
-export function showChart(measures,elementId,data){
-  const div = document.getElementById(elementId)
-  echarts.dispose(div)
-  const myChart = echarts.init(div,undefined,{
+export function showChart(measures, elementId, data) {
+  const div = document.getElementById(elementId);
+  echarts.dispose(div);
+  const myChart = echarts.init(div, undefined, {
     width: measures.allWidth,
     height: measures.allHeight,
   });
   // set options for chart
   const option = {
     title: {
-      text: 'Power User Curv'
+      text: 'Power User Curv',
     },
-    tooltip : {
+    tooltip: {
       trigger: 'axis',
       axisPointer: {
         type: 'cross',
         label: {
-            backgroundColor: '#6a7985'
-        }
-      }
+          backgroundColor: '#6a7985',
+        },
+      },
     },
     legend: {
-      data:['Power']
+      data: ['Power'],
     },
     toolbox: {
       feature: {
-          saveAsImage: {}
-      }
+        saveAsImage: {},
+      },
     },
     grid: {
       left: '3%',
       right: '4%',
       bottom: '3%',
-      containLabel: true
+      containLabel: true,
     },
-    xAxis : {
-      data: data.xAxis
+    xAxis: {
+      data: data.xAxis,
     },
-    yAxis : [
+    yAxis: [
       {
-        type : 'value'
-      }
+        type: 'value',
+      },
     ],
-    series : [
+    series: [
       {
-        name:'Total',
-        type:'bar',
+        name: 'Total',
+        type: 'bar',
         areaStyle: {},
-        data: data.yAxis
-      }
-    ]
+        data: data.yAxis,
+      },
+    ],
   };
 
   // use options to generate chart
