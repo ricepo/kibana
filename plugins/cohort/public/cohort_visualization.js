@@ -9,6 +9,7 @@ import { Spinner } from 'spin.js';
 import 'spin.js/spin.css';
 import dateMath from '@elastic/datemath';
 import { timefilter } from 'ui/timefilter';
+import { buildEsQuery } from '@kbn/es-query';
 
 /* Options for the loading spinner */
 const opts = {
@@ -53,20 +54,26 @@ export class CohortVisualizationProvider {
 
     const spinner = new Spinner(opts).spin(this.container);
 
+    /**
+     * get the filters from filter bar
+     */
+    let filters = this.vis.searchSource._fields.filter
+    const querys = this.vis.searchSource._fields.query
+
+    filters = _.filter(filters,v => !v.meta.disabled)
+    
     /* get timeRange */
     /* format dateTime by timezone such as "now/d"(datemath) */
     const from = dateMath.parse(timefilter.getTime().from).format();
     const to = dateMath.parse(timefilter.getTime().to, { roundUp: true }).format();
 
-    /* get filters */
-    const region = _.chain(this.vis.searchSource._fields.filter)
-      .filter(v => !v.meta.disabled && v.meta.key === 'region.name')
-      .map(x => ({
-        negate: x.meta.negate,
-        params: x.meta.params
-      }))
-      .get('0')
-      .value();
+    const range = { range: { createdAt: { gt: from, lte: to } } };
+    const {bool} = buildEsQuery(undefined, querys, filters);
+
+    bool.filter.push(range)
+    console.log('bool   ======>',bool)
+
+    const query = {bool}
 
     let interval = null;
     let period = null;
@@ -89,10 +96,8 @@ export class CohortVisualizationProvider {
         break;
     }
     const params = {
-      from,
-      to,
-      region,
-      interval
+      interval,
+      query
     };
 
     const begin = moment.now();

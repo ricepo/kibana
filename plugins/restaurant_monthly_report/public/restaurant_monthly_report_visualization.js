@@ -6,6 +6,7 @@ import dateMath from '@elastic/datemath';
 import { timefilter } from 'ui/timefilter';
 import { Spinner } from 'spin.js';
 import 'spin.js/spin.css';
+import { buildEsQuery } from '@kbn/es-query';
 
 const api = { query: '../api/restaurant_monthly_report/query' };
 
@@ -57,23 +58,21 @@ export class RestaurnatMonthlyReportVisualizationProvider {
 
     const spinner = new Spinner(opts).spin(this.container);
 
+    /**
+     * get the filters from filter bar
+     */
+    let filters = this.vis.searchSource._fields.filter
+    const querys = this.vis.searchSource._fields.query
 
+    filters = _.filter(filters,v => !v.meta.disabled)
+    
     /* get timeRange */
     /* format dateTime by timezone such as "now/d"(datemath) */
     const from = dateMath.parse(timefilter.getTime().from).format();
     const to = dateMath.parse(timefilter.getTime().to, { roundUp: true }).format();
 
-    /* get filters */
-    const region = _.chain(this.vis.searchSource._fields.filter)
-      .filter(v => !v.meta.disabled && v.meta.key === 'region.name')
-      .map(x => {
-        return {
-          negate: x.meta.negate,
-          params: x.meta.params
-        };
-      })
-      .get('0')
-      .value();
+    const range = { range: { createdAt: { gt: from, lte: to } } };
+    const {bool} = buildEsQuery(undefined, querys, filters);
 
     /* get settings in orders */
     /* const settings = await axios('../api/restaurant_monthly_report/getMaxResults'); */
@@ -115,13 +114,14 @@ export class RestaurnatMonthlyReportVisualizationProvider {
       return;
     }
 
+    bool.filter.push(range)
+    bool.filter.push({ terms:    { 'restaurant._id': newRests } })
+    console.log('bool   ======>',bool)
 
+    const query = {bool}
     /* create params for restaurant */
     const params = {
-      from,
-      to,
-      restaurants: newRests,
-      region,
+      query,
       aggs: {
         restaurants: {
           terms: {
@@ -202,7 +202,8 @@ async function getRestaurants() {
     url: '/v1/restaurants',
     baseURL: 'https://staging.isengard.ricepo.com',
     headers:{
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
+      'Authorization': 'JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiJhY2N0X0gxZnVjei1RNyIsImVtYWlsIjoiZGRAcmljZXBvLmNvbSIsInBob25lIjoiKzE0MDgyNTA0NzM5Iiwicm9sZXMiOlt7InNjb3BlIjpudWxsLCJuYW1lIjoicmljZXBvLm1hbmFnZXIifSx7InNjb3BlIjpudWxsLCJuYW1lIjoicmljZXBvLnN1cHBvcnQifSx7InNjb3BlIjoiNTYzNTJmY2MwZDI4OGQwN2YxZTAwMTg0IiwibmFtZSI6InJlZ2lvbi5zdXBwb3J0IiwiZGVzY3JpcHRpb24iOiJhbmNob3JhZ2UsYWsifSx7InNjb3BlIjoiNTYzNTJmY2MwZDI4OGQwN2YxZTAwMTg0IiwibmFtZSI6InJlZ2lvbi5kcml2ZXJNYW5hZ2VyIiwiZGVzY3JpcHRpb24iOiJhbmNob3JhZ2UsYWsifSx7InNjb3BlIjoiNTYzNTJmY2MwZDI4OGQwN2YxZTAwMTg0IiwibmFtZSI6InJlZ2lvbi5kcml2ZXIiLCJkZXNjcmlwdGlvbiI6ImFuY2hvcmFnZSxhayIsInRpbWV6b25lIjoiQW1lcmljYS9BbmNob3JhZ2UifSx7InNjb3BlIjpudWxsLCJuYW1lIjoicmljZXBvLmRlcHV0eSJ9LHsic2NvcGUiOm51bGwsIm5hbWUiOiJyaWNlcG8udGVjaCJ9XSwidHlwZSI6InN0YWZmIiwiaWF0IjoxNTUxNjU0Nzg0LCJleHAiOjYwNDgwMDkxMzcyMTIxMzEsInN1YiI6ImFjY3RfSDFmdWN6LVE3In0.hjLlWVhGnmY8yuR4mMLMJwGvKDPaxWtPuMxTyicOhPw'
     }
   });
 

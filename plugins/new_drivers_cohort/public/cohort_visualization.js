@@ -9,6 +9,7 @@ import { Spinner } from 'spin.js';
 import 'spin.js/spin.css';
 import dateMath from '@elastic/datemath';
 import { timefilter } from 'ui/timefilter';
+import { buildEsQuery } from '@kbn/es-query';
 
 const api = {
   query:          '../api/new_drivers_cohort/query',
@@ -60,13 +61,21 @@ export class NewDriversCohortVisualizationProvider{
 
     const spinner = new Spinner(opts).spin(this.container);
 
+    /**
+     * get the filters from filter bar
+     */
+    let filters = this.vis.searchSource._fields.filter
+    const querys = this.vis.searchSource._fields.query
+
+    filters = _.filter(filters,v => !v.meta.disabled)
+
     /* get timeRange */
     /* format dateTime by timezone such as "now/d"(datemath) */
     const from = dateMath.parse(timefilter.getTime().from).format();
     const to = dateMath.parse(timefilter.getTime().to, { roundUp: true }).format();
 
     /* get filters */
-    const region = _.chain(this.vis.searchSource._fields.filter)
+    const region = _.chain(filters)
       .filter(v => !v.meta.disabled && v.meta.key === 'region.name')
       .map(x => ({
         negate: x.meta.negate,
@@ -75,11 +84,9 @@ export class NewDriversCohortVisualizationProvider{
       .get('0')
       .value();
 
-    const params = {
-      from,
-      to,
-      region
-    };
+    const range = { range: { createdAt: { gt: from, lte: to } } };
+    const {bool} = buildEsQuery(undefined, querys, filters);
+
 
     /**
      * get new drivers
@@ -131,12 +138,17 @@ export class NewDriversCohortVisualizationProvider{
       return;
     }
 
+    bool.filter.push(range)
+    
+    const bool1 = _.cloneDeep(bool)
+    bool1.filter.push({ terms:  { 'delivery.courier._id': newCreatedDriverId } })
+    console.log('bool   ======>',bool)
+
     /* get drivers orders */
     const params1 = {
-      from,
-      to,
-      drivers: newCreatedDriverId,
-      region,
+      query:{
+        bool: bool1
+      },
       aggs: {
         drivers: {
           terms: {
@@ -185,7 +197,9 @@ export class NewDriversCohortVisualizationProvider{
         break;
     }
 
-    params.drivers = ordersDrivers;
+    bool.filter.push({ terms:  { 'delivery.courier._id': ordersDrivers } })
+    const params = {};
+    params.query = {bool};
     params.aggs = {
       createdAt: {
         date_histogram: {

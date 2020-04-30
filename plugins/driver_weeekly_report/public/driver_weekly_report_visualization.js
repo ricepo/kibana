@@ -7,6 +7,7 @@ import 'spin.js/spin.css';
 import dateMath from '@elastic/datemath';
 import { timefilter } from 'ui/timefilter';
 import { showChart } from './util';
+import { buildEsQuery } from '@kbn/es-query';
 
 /* Options for the loading spinner */
 const opts = {
@@ -52,23 +53,19 @@ export class DriverWeeklyReportVisualizationProvider {
 
     const spinner = new Spinner(opts).spin(this.container);
 
+    /**
+     * get the filters from filter bar
+     */
+    let filters = this.vis.searchSource._fields.filter
+    const querys = this.vis.searchSource._fields.query
+
+    filters = _.filter(filters,v => !v.meta.disabled)
+    
+
     /* get timeRange */
     /* format dateTime by timezone such as 'now/d'(datemath) */
     const from = dateMath.parse(timefilter.getTime().from).format();
     let to = dateMath.parse(timefilter.getTime().to, { roundUp: true }).format();
-
-
-    /* get filters */
-    const region = _.chain(this.vis.searchSource._fields.filter)
-      .filter(v => !v.meta.disabled && v.meta.key === 'region.name')
-      .map(x => {
-        return {
-          negate: x.meta.negate,
-          params: x.meta.params
-        };
-      })
-      .get('0')
-      .value();
 
     const accounts = await getAccounts();
     const data = {
@@ -81,15 +78,22 @@ export class DriverWeeklyReportVisualizationProvider {
     to = moment(to).endOf('isoWeek').toDate();
     let currentWeek = moment(from).startOf('isoWeek').toDate();
 
+    const range = { range: { createdAt: { 
+      gt: moment(currentWeek).subtract(4, 'weeks').toDate(), 
+      lte: moment(to).toDate() 
+    } } };
+    const {bool} = buildEsQuery(undefined, querys, filters);
 
+    bool.filter.push(range)
+    console.log('bool   ======>',bool)
+
+    const query = {bool}
     /* Get orders last 4 week */
-    const params1 = {
-      from: moment(currentWeek).subtract(4, 'weeks').toDate(),
-      to: moment(to).toDate(),
-      region
+    const params = {
+      query
     };
 
-    let esData = await getDataFromEs(params1);
+    let esData = await getDataFromEs(params);
 
     esData = _.get(esData, 'data.aggregations.date.buckets');
 
