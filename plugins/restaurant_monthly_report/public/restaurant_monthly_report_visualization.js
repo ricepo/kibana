@@ -202,7 +202,8 @@ async function getRestaurants() {
     url: '/v1/restaurants',
     baseURL: 'https://staging.isengard.ricepo.com',
     headers:{
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
+      'Authorization': 'JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiJhY2N0X0gxZnVjei1RNyIsImVtYWlsIjoiZGRAcmljZXBvLmNvbSIsInBob25lIjoiKzE0MDgyNTA0NzM5Iiwicm9sZXMiOlt7InNjb3BlIjpudWxsLCJuYW1lIjoicmljZXBvLm1hbmFnZXIifSx7InNjb3BlIjpudWxsLCJuYW1lIjoicmljZXBvLnN1cHBvcnQifSx7InNjb3BlIjoiNTYzNTJmY2MwZDI4OGQwN2YxZTAwMTg0IiwibmFtZSI6InJlZ2lvbi5zdXBwb3J0IiwiZGVzY3JpcHRpb24iOiJhbmNob3JhZ2UsYWsifSx7InNjb3BlIjoiNTYzNTJmY2MwZDI4OGQwN2YxZTAwMTg0IiwibmFtZSI6InJlZ2lvbi5kcml2ZXJNYW5hZ2VyIiwiZGVzY3JpcHRpb24iOiJhbmNob3JhZ2UsYWsifSx7InNjb3BlIjoiNTYzNTJmY2MwZDI4OGQwN2YxZTAwMTg0IiwibmFtZSI6InJlZ2lvbi5kcml2ZXIiLCJkZXNjcmlwdGlvbiI6ImFuY2hvcmFnZSxhayIsInRpbWV6b25lIjoiQW1lcmljYS9BbmNob3JhZ2UifSx7InNjb3BlIjpudWxsLCJuYW1lIjoicmljZXBvLmRlcHV0eSJ9LHsic2NvcGUiOm51bGwsIm5hbWUiOiJyaWNlcG8udGVjaCJ9XSwidHlwZSI6InN0YWZmIiwiaWF0IjoxNTUxNjU0Nzg0LCJleHAiOjYwNDgwMDkxMzcyMTIxMzEsInN1YiI6ImFjY3RfSDFmdWN6LVE3In0.hjLlWVhGnmY8yuR4mMLMJwGvKDPaxWtPuMxTyicOhPw'
     }
   });
 
