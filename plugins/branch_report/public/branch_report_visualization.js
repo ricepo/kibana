@@ -74,13 +74,30 @@ export class BranchReportVisualizationProvider {
     const from = dateMath.parse(timefilter.getTime().from).format();
     const to = dateMath.parse(timefilter.getTime().to, { roundUp: true }).format();
 
+    const batch = _.chain(this.vis.searchSource._fields.filter)
+      .filter(v => !v.meta.disabled && v.meta.key === 'restaurant.delivery.batch')
+      .map(x => ({
+        negate: x.meta.negate,
+        params: x.meta.params
+      }))
+      .get('0')
+      .value();
+
+
     const range = { range: { createdAt: { gt: from, lte: to } } };
+    const range1 = { range: { start: { gt: from, lte: to } } };
     const { bool } = buildEsQuery(undefined, querys, filters);
 
+    const bool1 = _.cloneDeep(bool);
+
     bool.filter.push(range);
+    bool1.filter.push(range1);
     console.log('bool   ======>', bool);
+    console.log('bool1 ====>', bool1);
 
     const query = { bool };
+
+    const query1 = { bool: bool1 };
 
     const params1 = {
       query,
@@ -120,6 +137,7 @@ export class BranchReportVisualizationProvider {
       to,
       emailArr,
       driverArr,
+      batch
     };
 
     const promises = [

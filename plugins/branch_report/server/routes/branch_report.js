@@ -8,7 +8,7 @@ export default function(server) {
     path: '/api/branch_report/shifts',
     method: 'POST',
     handler(req) {
-      const { from, to, emailArr } = req.payload;
+      const { from, to, emailArr, batch } = req.payload;
       const searchRequest = {
         index: 'shifts', // you can also change index to another
         size: 0, // size of raw data
@@ -55,6 +55,18 @@ export default function(server) {
 
       if (emailArr.length) {
         searchRequest.body.query.bool.filter.push({ terms: { 'drivers.email': emailArr } });
+      }
+
+      if (batch) {
+        if (!_.isArray(batch.params)) {
+          batch.params = batch.params.query.split();
+        }
+
+        if (batch.negate) {
+          searchRequest.body.query.bool.must_not.push({ terms:  { 'batch': batch.params } });
+        } else {
+          searchRequest.body.query.bool.filter.push({ terms:  { 'batch': batch.params } });
+        }
       }
 
       const { callWithRequest } = server.plugins.elasticsearch.getCluster('data');
