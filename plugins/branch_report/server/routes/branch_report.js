@@ -8,12 +8,12 @@ export default function(server) {
     path: '/api/branch_report/shifts',
     method: 'POST',
     handler(req) {
-      const { from, to, emailArr, batch } = req.payload;
+      const { query, emailArr, batch } = req.payload;
       const searchRequest = {
         index: 'shifts', // you can also change index to another
         size: 0, // size of raw data
         body: {
-          query: { bool: { filter: [{ range: { start: { gt: from, lte: to } } }] } },
+          query,
           aggs: {
             email: {
               terms: {

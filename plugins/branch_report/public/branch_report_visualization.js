@@ -142,7 +142,7 @@ export class BranchReportVisualizationProvider {
 
     const promises = [
       getSearchDataFromEs(api.jobsSearch, params2),
-      getSearchDataFromEs(api.shiftSearch, params2),
+      getSearchDataFromEs(api.shiftSearch, { query: query1, emailArr, driverArr }),
       getSearchDataFromEs(api.shiftEventsSearch, params2),
       getSearchDataFromEs(api.orderEventsSearch, params2),
       getSearchDataFromEs(api.orderEventsRouteSearch, params2),
