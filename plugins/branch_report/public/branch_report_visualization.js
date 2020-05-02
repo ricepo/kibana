@@ -75,7 +75,7 @@ export class BranchReportVisualizationProvider {
     const to = dateMath.parse(timefilter.getTime().to, { roundUp: true }).format();
 
     const batch = _.chain(this.vis.searchSource._fields.filter)
-      .filter(v => !v.meta.disabled && v.meta.key === 'restaurant.delivery.batch')
+      .filter(v => !v.meta.disabled && v.meta.key === 'restaurant.delivery.batch.keyword')
       .map(x => ({
         negate: x.meta.negate,
         params: x.meta.params

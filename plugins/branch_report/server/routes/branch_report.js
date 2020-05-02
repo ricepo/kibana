@@ -13,7 +13,12 @@ export default function(server) {
         index: 'shifts', // you can also change index to another
         size: 0, // size of raw data
         body: {
-          query: { bool: { filter: [{ range: { start: { gt: from, lte: to } } }] } },
+          query: { 
+            bool: { 
+              filter: [{ range: { start: { gt: from, lte: to } } }],
+              must_not: []
+            }  
+          },
           aggs: {
             email: {
               terms: {
