@@ -23,5 +23,6 @@ RUN kibana-plugin install file:///usr/share/kibana/kibana-extra/driver_weeekly_r
 RUN kibana-plugin install file:///usr/share/kibana/kibana-extra/new_drivers_cohort-0.0.0.zip
 RUN kibana-plugin install file:///usr/share/kibana/kibana-extra/restaurant_monthly_report-0.0.0.zip
 RUN kibana-plugin install file:///usr/share/kibana/kibana-extra/customer_coupon_cohort-0.0.0.zip
+RUN kibana-plugin install https://github.com/fbaligand/kibana-enhanced-table/releases/download/v1.8.0/enhanced-table-1.8.0_7.5.2.zip
 
 
