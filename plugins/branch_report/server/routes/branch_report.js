@@ -208,12 +208,13 @@ export default function(server) {
     handler(req) {
       const { from, to, emailArr } = req.payload;
       const searchRequest = {
-        index: 'order_shift_events', // you can also change index to another
+        index: 'events', // you can also change index to another
         size: 0,
         body: {
           query: {
             bool: {
               filter: [
+                { terms: { name: ['shift.driver.unassigned', 'shift-late'] } },
                 { range: { createdAt: { gt: from, lte: to } } },
                 { range: { 'data.lateDrop': { gte: 0 } } },
               ],
@@ -266,7 +267,7 @@ export default function(server) {
     handler(req) {
       const { from, to, emailArr, driverArr } = req.payload;
       const searchRequest = {
-        index: 'order_delivery_events', // you can also change index to another
+        index: 'events', // you can also change index to another
         size: 0,
         body: {
           query: {
@@ -318,7 +319,7 @@ export default function(server) {
     handler(req) {
       const { from, to, emailArr, driverArr } = req.payload;
       const searchRequest = {
-        index: 'order_delivery_events', // you can also change index to another
+        index: 'events', // you can also change index to another
         size: 0,
         body: {
           query: {
