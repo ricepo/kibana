@@ -11,6 +11,7 @@ const summaryKeys = [
   'orders',
   'hours',
   'driverPay',
+  'adjustmentPay',
   'orderPerHour',
   'driverCommission',
   'driverTip',
@@ -77,6 +78,7 @@ function getSumofData(data) {
 
   /* Get average of delivery time */
   ans.averageDeliveryTime = _.get(ans, 'averageDeliveryTime', 0) / data.length;
+  ans.jobHours = _.get(data, '[0].driver.summary.jobHours', 0);
 
   return ans;
 
@@ -160,7 +162,7 @@ export function showTable(element, data) {
 
     const orders = _.get(summary ,'orders', 0);
     const distribution = _.get(summary, 'driverPay', 0);
-    const adjustments = _.get(summary, 'adjustmentPay', 0) / 100;
+    const adjustments = _.get(summary, 'adjustmentPay', 0);
     const averageDeliveryTime = _.get(summary, 'averageDeliveryTime', 0);
 
     /* Average Delivery Time */
@@ -173,20 +175,20 @@ export function showTable(element, data) {
 
 
     /* Driver online Duration */
-    const hours = _.get(summary, 'hours', 0)
-    totalSum[3] += hours;
-    d.push(hours.toFixed(1));
+    const onlineHours = _.get(summary, 'jobHours') || _.get(summary, 'hours', 0); //used fallback logic
+    totalSum[3] += onlineHours;
+    d.push(onlineHours.toFixed(1));
 
     /* hours */
-    const shiftHours = _.sumBy(v, 'duration') / 60;
-    totalSum[4] += shiftHours;
-    d.push(shiftHours.toFixed(1));
+    const hours = _.get(summary, 'hours', 0);
+    totalSum[4] += hours;
+    d.push(hours.toFixed(1));
 
     /* Driver distribution */
     totalSum[5] += distribution;
     d.push(`$${distribution.toFixed()}`);
 
-    const guaranteePay = ((hours) * getDriverRate(regionName) + _.get(summary, 'adjustmentPay', 0)) / 100;
+    const guaranteePay = (((hours) * getDriverRate(regionName)) / 100) + _.get(summary, 'adjustmentPay', 0);
     const guaranteeAdjustments = guaranteePay - distribution > 0 ? guaranteePay - distribution : 0;
 
     /* guarantee adjustments */
@@ -222,7 +224,7 @@ export function showTable(element, data) {
     d.push(`$${payPerOrder.toFixed(2)}`);
 
     /* commission per order */
-    const commissionPerOrder = _.get(summary, 'driverCommission') / orders / 100;
+    const commissionPerOrder = _.get(summary, 'driverCommission', 0) / orders;
 
     totalSum[12] += _.isFinite(commissionPerOrder) ? commissionPerOrder : 0;
     d.push(`$${commissionPerOrder.toFixed(2)}`);
@@ -235,6 +237,7 @@ export function showTable(element, data) {
     totalSum[13] += tipPerOrder;
     d.push(`$${tipPerOrder.toFixed(2)}`);
 
+    const shiftHours = _.sumBy(v, 'duration') / 60;
     totalSum[14] += shiftHours;
     d.push((shiftHours).toFixed(1));
 
