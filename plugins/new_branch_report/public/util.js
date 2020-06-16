@@ -10,6 +10,7 @@ const Moment = extendMoment(moment);
 const summaryKeys = [
   'orders',
   'hours',
+  'actualHours',
   'driverPay',
   'adjustmentPay',
   'orderPerHour',
@@ -125,6 +126,7 @@ export function showTable(element, data) {
     'average Delivery Time',
     'orders',
     'Total Online Hours',
+    'Total Actual Hours',
     'Shift Online Hours',
     'Total Distribution',
     'Guarantee Adjustments',
@@ -184,49 +186,54 @@ export function showTable(element, data) {
     totalSum[4] += hours;
     d.push(hours.toFixed(1));
 
+    /* Drivers Actual Hours */
+    const actualHours = _.get(summary, 'actualHours', 0);
+    totalSum[5] += actualHours;
+    d.push(actualHours.toFixed(1));
+
     /* Driver distribution */
-    totalSum[5] += distribution;
+    totalSum[6] += distribution;
     d.push(`$${distribution.toFixed()}`);
 
     const guaranteePay = (((hours) * getDriverRate(regionName)) / 100) + _.get(summary, 'adjustmentPay', 0);
     const guaranteeAdjustments = guaranteePay - distribution > 0 ? guaranteePay - distribution : 0;
 
     /* guarantee adjustments */
-    totalSum[6] += guaranteeAdjustments;
+    totalSum[7] += guaranteeAdjustments;
     d.push(`$${guaranteeAdjustments.toFixed(2)}`);
 
     /* Driver adjustments */
-    totalSum[7] += adjustments;
+    totalSum[8] += adjustments;
     d.push(`$${adjustments.toFixed(2)}`);
 
     /* driver dist - adj */
-    totalSum[8] += distribution - guaranteeAdjustments - adjustments;
+    totalSum[9] += distribution - guaranteeAdjustments - adjustments;
     d.push(`$${(distribution - guaranteeAdjustments - adjustments).toFixed()}`);
 
     /* averagePayPerHour */
     const payPerHour = (distribution - guaranteeAdjustments - adjustments) / (hours);
     const finalPayPerHour = _.isFinite(payPerHour) ? payPerHour : 0;
 
-    totalSum[9] += finalPayPerHour;
+    totalSum[10] += finalPayPerHour;
 
     d.push(`$${finalPayPerHour.toFixed(2)}`);
 
     /* order/hour */
     const orderPerHour = _.isFinite(orders / (hours)) ? orders / (hours) : 0;
 
-    totalSum[10] += orderPerHour;
+    totalSum[11] += orderPerHour;
     d.push(orderPerHour.toFixed(2));
 
     /* pay/order */
     const payPerOrder = (distribution - guaranteeAdjustments - adjustments) / orders;
 
-    totalSum[11] += _.isFinite(payPerOrder) ? payPerOrder : 0;
+    totalSum[12] += _.isFinite(payPerOrder) ? payPerOrder : 0;
     d.push(`$${payPerOrder.toFixed(2)}`);
 
     /* commission per order */
     const commissionPerOrder = _.get(summary, 'driverCommission', 0) / orders;
 
-    totalSum[12] += _.isFinite(commissionPerOrder) ? commissionPerOrder : 0;
+    totalSum[13] += _.isFinite(commissionPerOrder) ? commissionPerOrder : 0;
     d.push(`$${commissionPerOrder.toFixed(2)}`);
 
     /* Tips/order */
@@ -234,22 +241,22 @@ export function showTable(element, data) {
       ? payPerOrder - commissionPerOrder
       : 0;
 
-    totalSum[13] += tipPerOrder;
+    totalSum[14] += tipPerOrder;
     d.push(`$${tipPerOrder.toFixed(2)}`);
 
     const shiftHours = _.sumBy(v, 'duration') / 60;
-    totalSum[14] += shiftHours;
+    totalSum[15] += shiftHours;
     d.push((shiftHours).toFixed(1));
 
     /* No call No Show */
     const ncns = _.get(summary, 'ncns', 0);
 
-    totalSum[15] += ncns;
+    totalSum[16] += ncns;
     d.push(ncns);
 
     /* incompleteShift */
     const incompleteShift = _.get(summary, 'incompleteShift', 0);
-    totalSum[16] += incompleteShift;
+    totalSum[17] += incompleteShift;
     d.push(incompleteShift);
 
     /* Late Drop */
@@ -257,7 +264,7 @@ export function showTable(element, data) {
       .get(k, [])
       .filter(v => _.get(v, 'driver.lateDrop', 0) > 0)
       .value();
-    totalSum[17] += lateDrop.length;
+    totalSum[18] += lateDrop.length;
     d.push(lateDrop.length);
 
     const pickupFailEvent = _.get(summary, 'pickupFailEvent', 0);
