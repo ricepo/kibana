@@ -10,7 +10,7 @@ const Moment = extendMoment(moment);
 const summaryKeys = [
   'orders',
   'hours',
-  'actualHours',
+  'actualHour',
   'driverPay',
   'adjustmentPay',
   'orderPerHour',
@@ -95,15 +95,19 @@ export function showTable(element, data) {
 
   /* Get data */
   const { driverShifts,
-    unassignDriverShifts } = data;
+    unassignDriverShifts, totalJobs } = data;
 
   /* to calculate total */
   const total = {
     averageDeliveryTime: [],
     orders: [],
     hours: [],
+    onlineHours: [],
+    actualHours: [],
+    shiftHours:   [],
     distribution: [],
     guaranteeAdjustments: [],
+    manualAdj: [],
     driverPay: [],
     payPerHour: [],
     orderPerHour: [],
@@ -118,7 +122,7 @@ export function showTable(element, data) {
     cambridgeFailRate: [],
   };
 
-  const totalSum = _.times(18, _.constant(0));
+  const totalSum = _.times(20, _.constant(0));
 
   const column = [
     'city',
@@ -126,8 +130,8 @@ export function showTable(element, data) {
     'average Delivery Time',
     'orders',
     'Total Online Hours',
-    'Total Actual Hours',
     'Shift Online Hours',
+    'Total Actual Hours',
     'Total Distribution',
     'Guarantee Adjustments',
     'Manual Adjustments',
@@ -168,72 +172,72 @@ export function showTable(element, data) {
     const averageDeliveryTime = _.get(summary, 'averageDeliveryTime', 0);
 
     /* Average Delivery Time */
-    totalSum[1] += _.isNaN(averageDeliveryTime) ? 0 : averageDeliveryTime;
+    totalSum[2] = _.mean([totalSum[2], (_.isNaN(averageDeliveryTime) ? 0 : averageDeliveryTime)]);
     d.push(averageDeliveryTime.toFixed());
 
     /* Driver total orders */
-    totalSum[2] += orders;
+    totalSum[3] += orders;
     d.push(orders);
 
 
     /* Driver online Duration */
-    const onlineHours = _.get(summary, 'jobHours') || _.get(summary, 'hours', 0); //used fallback logic
-    totalSum[3] += onlineHours;
+    const onlineHours = _.get(totalJobs, k) || _.get(summary, 'hours', 0); //used fallback logic
+    totalSum[4] += onlineHours;
     d.push(onlineHours.toFixed(1));
 
     /* hours */
     const hours = _.get(summary, 'hours', 0);
-    totalSum[4] += hours;
+    totalSum[5] += hours;
     d.push(hours.toFixed(1));
 
     /* Drivers Actual Hours */
-    const actualHours = _.get(summary, 'actualHours', 0);
-    totalSum[5] += actualHours;
+    const actualHours = _.get(summary, 'actualHour', 0);
+    totalSum[6] += actualHours;
     d.push(actualHours.toFixed(1));
 
     /* Driver distribution */
-    totalSum[6] += distribution;
+    totalSum[7] += distribution;
     d.push(`$${distribution.toFixed()}`);
 
     const guaranteePay = (((hours) * getDriverRate(regionName)) / 100) + _.get(summary, 'adjustmentPay', 0);
     const guaranteeAdjustments = guaranteePay - distribution > 0 ? guaranteePay - distribution : 0;
 
     /* guarantee adjustments */
-    totalSum[7] += guaranteeAdjustments;
+    totalSum[8] += guaranteeAdjustments;
     d.push(`$${guaranteeAdjustments.toFixed(2)}`);
 
     /* Driver adjustments */
-    totalSum[8] += adjustments;
+    totalSum[9] += adjustments;
     d.push(`$${adjustments.toFixed(2)}`);
 
     /* driver dist - adj */
-    totalSum[9] += distribution - guaranteeAdjustments - adjustments;
+    totalSum[10] += distribution - guaranteeAdjustments - adjustments;
     d.push(`$${(distribution - guaranteeAdjustments - adjustments).toFixed()}`);
 
     /* averagePayPerHour */
     const payPerHour = (distribution - guaranteeAdjustments - adjustments) / (hours);
     const finalPayPerHour = _.isFinite(payPerHour) ? payPerHour : 0;
 
-    totalSum[10] += finalPayPerHour;
+    totalSum[11] = _.mean([totalSum[11], finalPayPerHour ]);
 
     d.push(`$${finalPayPerHour.toFixed(2)}`);
 
     /* order/hour */
     const orderPerHour = _.isFinite(orders / (hours)) ? orders / (hours) : 0;
 
-    totalSum[11] += orderPerHour;
+    totalSum[12] = _.mean([totalSum[12], orderPerHour ]);
     d.push(orderPerHour.toFixed(2));
 
     /* pay/order */
     const payPerOrder = (distribution - guaranteeAdjustments - adjustments) / orders;
 
-    totalSum[12] += _.isFinite(payPerOrder) ? payPerOrder : 0;
+    totalSum[13] = _.mean([totalSum[13], (_.isFinite(payPerOrder) ? payPerOrder : 0)]);
     d.push(`$${payPerOrder.toFixed(2)}`);
 
     /* commission per order */
     const commissionPerOrder = _.get(summary, 'driverCommission', 0) / orders;
 
-    totalSum[13] += _.isFinite(commissionPerOrder) ? commissionPerOrder : 0;
+    totalSum[14] = _.mean([totalSum[14], (_.isFinite(commissionPerOrder) ? commissionPerOrder : 0)]);
     d.push(`$${commissionPerOrder.toFixed(2)}`);
 
     /* Tips/order */
@@ -241,22 +245,22 @@ export function showTable(element, data) {
       ? payPerOrder - commissionPerOrder
       : 0;
 
-    totalSum[14] += tipPerOrder;
+    totalSum[15] = _.mean([totalSum[15], tipPerOrder]);
     d.push(`$${tipPerOrder.toFixed(2)}`);
 
     const shiftHours = _.sumBy(v, 'duration') / 60;
-    totalSum[15] += shiftHours;
+    totalSum[16] += shiftHours;
     d.push((shiftHours).toFixed(1));
 
     /* No call No Show */
     const ncns = _.get(summary, 'ncns', 0);
 
-    totalSum[16] += ncns;
+    totalSum[17] += ncns;
     d.push(ncns);
 
     /* incompleteShift */
     const incompleteShift = _.get(summary, 'incompleteShift', 0);
-    totalSum[17] += incompleteShift;
+    totalSum[18] += incompleteShift;
     d.push(incompleteShift);
 
     /* Late Drop */
@@ -264,7 +268,7 @@ export function showTable(element, data) {
       .get(k, [])
       .filter(v => _.get(v, 'driver.lateDrop', 0) > 0)
       .value();
-    totalSum[18] += lateDrop.length;
+    totalSum[19] += lateDrop.length;
     d.push(lateDrop.length);
 
     const pickupFailEvent = _.get(summary, 'pickupFailEvent', 0);
@@ -280,6 +284,18 @@ export function showTable(element, data) {
 
   result = _.sortBy(result, v => -v[3]);
   result.unshift(column);
+
+  const ans = _.map(totalSum, (v, i) => {
+
+    if (i === 0 || i === 1) {
+      return '';
+    }
+    if (_.includes([7, 8, 9, 10, 11, 13, 14, 15], i)) {
+      return `$${v.toFixed(2)}`;
+    }
+    return v.toFixed(2);
+  })
+  result.push(ans);
 
   /* convert the result array into */
   const content = result.join('\n');

@@ -112,6 +112,23 @@ export class NewBranchReportVisualizationProvider {
       .groupBy('driver.email')
       .value();
 
+    const totalJobs = {};
+
+    /* Get all jobs of driver for each day */
+    _.forEach(driverShifts, (shifts, d) => {
+
+      const hours = _.chain(shifts)
+      .map(s => ({ ...s, start: moment(s.start).format('YYYY-MM-DD') }))
+      .groupBy('start')
+      .map(r => _.get(r, '[0]'))
+      .compact()
+      .sumBy('driver.summary.jobHours')
+      .value();
+
+      totalJobs[d] = hours;
+    });
+
+
     const unassignDriverShifts = _.chain(shifts)
     .map('_source')
     .filter(s => _.get(s, 'unassignedDrivers.length', 0) > 0)
@@ -127,7 +144,8 @@ export class NewBranchReportVisualizationProvider {
 
     const data = {
       driverShifts,
-      unassignDriverShifts
+      unassignDriverShifts,
+      totalJobs
     };
 
     /* Stop the loading */
