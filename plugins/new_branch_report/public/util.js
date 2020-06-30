@@ -97,6 +97,9 @@ export function showTable(element, data) {
   const { driverShifts,
     unassignDriverShifts, totalJobs } = data;
 
+  let totalHours = 0;
+  let totalOrders = 0;
+
   /* to calculate total */
   const total = {
     averageDeliveryTime: [],
@@ -222,6 +225,10 @@ export function showTable(element, data) {
 
     d.push(`$${finalPayPerHour.toFixed(2)}`);
 
+    /* Save total Order / Hour  */
+    totalOrders += orders;
+    totalHours += hours;
+
     /* order/hour */
     const orderPerHour = _.isFinite(orders / (hours)) ? orders / (hours) : 0;
 
@@ -253,7 +260,7 @@ export function showTable(element, data) {
     d.push((shiftHours).toFixed(1));
 
     /* No call No Show */
-    const ncns = _.get(summary, 'ncns', 0);
+    const ncns = _.get(summary, 'noCallnoShow', 0);
 
     totalSum[17] += ncns;
     d.push(ncns);
@@ -289,6 +296,13 @@ export function showTable(element, data) {
 
     if (i === 0 || i === 1) {
       return '';
+    }
+
+    /* Get the final order per hour */
+    if (i === 12) {
+
+      const finalorderPerHour = _.isNaN(totalOrders / totalHours) ? 0 : (totalOrders / totalHours).toFixed(1)
+      return finalorderPerHour;
     }
     if (_.includes([7, 8, 9, 10, 11, 13, 14, 15], i)) {
       return `$${v.toFixed(2)}`;
