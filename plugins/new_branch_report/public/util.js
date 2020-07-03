@@ -95,7 +95,7 @@ export function showTable(element, data) {
 
   /* Get data */
   const { driverShifts,
-    unassignDriverShifts, totalJobs } = data;
+    unassignDriverShifts, totalJobs, driverOrders } = data;
 
   let totalHours = 0;
   let totalOrders = 0;
@@ -169,7 +169,12 @@ export function showTable(element, data) {
     d.push(_.split(regionName, ',')[0]);
     d.push(`${_.toUpper(driverName.slice(0, 3))}${driverName.slice(3)}`);
 
-    const orders = _.get(summary ,'orders', 0);
+    /* Get driver orders and only get uniq orders */
+    const orders = _.chain(driverOrders)
+      .get(k, [])
+      .uniqBy(o => _.get(o, 'bundle.combineId') || o._id)
+      .size();
+
     const distribution = _.get(summary, 'driverPay', 0);
     const adjustments = _.get(summary, 'adjustmentPay', 0);
     const averageDeliveryTime = _.get(summary, 'averageDeliveryTime', 0);

@@ -34,6 +34,7 @@ const opts = {
 
 const api = {
   shiftSearch: '../api/new_branch_report/shifts',
+  orders: '../api/new_branch_report/orders',
 
 };
 
@@ -96,9 +97,12 @@ export class NewBranchReportVisualizationProvider {
       batch
     };
 
+    /* Clone params for orders */
+    const params2 = _.cloneDeep(params1);
 
     const begin = moment();
     const shifts = await getSearchDataFromEs(api.shiftSearch, params1, 'start');
+    const ordersData = await getSearchDataFromEs(api.orders, params2, 'createdAt');
 
     const driverShifts = _.chain(shifts)
       .map('_source')
@@ -110,6 +114,12 @@ export class NewBranchReportVisualizationProvider {
 
       }, [])
       .groupBy('driver.email')
+      .value();
+
+    /* Get driver orders  */
+    const driverOrders = _.chain(ordersData)
+      .map(o => ({ ...o._source, _id: o._id,  }))
+      .groupBy('delivery.courier.email')
       .value();
 
     const totalJobs = {};
@@ -145,7 +155,8 @@ export class NewBranchReportVisualizationProvider {
     const data = {
       driverShifts,
       unassignDriverShifts,
-      totalJobs
+      totalJobs,
+      driverOrders
     };
 
     /* Stop the loading */
@@ -185,6 +196,7 @@ export class NewBranchReportVisualizationProvider {
  * @param {Object} params (filters and timeRange from kibana)
  */
 async function getSearchDataFromEs(api,params,key){
+
   let data = [];
   await getData(api,params)
   return data;
