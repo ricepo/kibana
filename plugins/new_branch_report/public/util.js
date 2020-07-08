@@ -175,7 +175,7 @@ export function showTable(element, data) {
       .uniqBy(o => _.get(o, 'bundle.combineId') || o._id)
       .size();
 
-    const distribution = _.get(summary, 'driverPay', 0);
+    const distribution = _.sumBy(_.get(driverOrders, k, []), 'distribution.driver', 0) / 100;
     const adjustments = _.get(summary, 'adjustmentPay', 0);
     const averageDeliveryTime = _.get(summary, 'averageDeliveryTime', 0);
 

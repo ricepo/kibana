@@ -102,7 +102,7 @@ export class NewBranchReportVisualizationProvider {
 
     const begin = moment();
     const shifts = await getSearchDataFromEs(api.shiftSearch, params1, 'start');
-    const ordersData = await getSearchDataFromEs(api.orders, params2, 'createdAt');
+    const ordersData = await getSearchDataFromEs(api.orders, params2, 'delivery.finishAt');
 
     const driverShifts = _.chain(shifts)
       .map('_source')
@@ -214,7 +214,7 @@ async function getSearchDataFromEs(api,params,key){
     const res = a.data.hits.hits;
     data = data.concat(res)
     if(res.length){
-      params.from = _.get(res[res.length-1]._source, key)
+      params.from = _.get(res[res.length-1]._source, key) || _.get(res[res.length-1]._source, 'createdAt')
       await getData(api,params)
     }
   }
