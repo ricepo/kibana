@@ -138,9 +138,9 @@ export default function(server) {
         }
 
         if (batch.negate) {
-          searchRequest.body.query.bool.must_not.push({ terms:  { 'restaurant.delivery.batch': batch.params } });
+          searchRequest.body.query.bool.must_not.push({ terms:  { 'restaurant.delivery.batch.keyword': batch.params } });
         } else {
-          searchRequest.body.query.bool.filter.push({ terms:  { 'restaurant.delivery.batch': batch.params } });
+          searchRequest.body.query.bool.filter.push({ terms:  { 'restaurant.delivery.batch.keyword': batch.params } });
         }
       }
 

@@ -176,7 +176,7 @@ export function showTable(element, data) {
       .size();
 
     const distribution = _.sumBy(_.get(driverOrders, k, []), 'distribution.driver', 0) / 100;
-    const adjustments = _.get(summary, 'adjustmentPay', 0);
+    const adjustments = _.sumBy(_.get(driverOrders, k, []), 'adjustments.driver', 0) / 100;
     const averageDeliveryTime = _.get(summary, 'averageDeliveryTime', 0);
 
     /* Average Delivery Time */
@@ -247,7 +247,9 @@ export function showTable(element, data) {
     d.push(`$${payPerOrder.toFixed(2)}`);
 
     /* commission per order */
-    const commissionPerOrder = _.get(summary, 'driverCommission', 0) / orders;
+    const commission = _.sumBy(_.get(driverOrders, k, []), 'commission.driver', 0) / 100;
+
+    const commissionPerOrder = commission / orders;
 
     totalSum[14] = _.mean([totalSum[14], (_.isFinite(commissionPerOrder) ? commissionPerOrder : 0)]);
     d.push(`$${commissionPerOrder.toFixed(2)}`);
