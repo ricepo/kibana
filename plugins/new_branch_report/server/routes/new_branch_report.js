@@ -52,11 +52,16 @@ export default function(server) {
 
       /* Add batch filter  */
       if (batch) {
-        if (!_.isArray(batch.params)) {
+        if (batch.params && !_.isArray(batch.params)) {
           batch.params = batch.params.query.split();
         }
 
-        if (batch.negate) {
+
+        if (batch.negate && batch.type === 'exists') {
+          searchRequest.body.query.bool.must_not.push({ exists:  { field: 'batch' } });
+        } else if(!batch.negate && batch.type === 'exists') {
+          searchRequest.body.query.bool.filter.push({ exists:  { field: 'batch' } });
+        } else if(batch.negate && batch.params) {
           searchRequest.body.query.bool.must_not.push({ terms:  { 'batch': batch.params } });
         } else {
           searchRequest.body.query.bool.filter.push({ terms:  { 'batch': batch.params } });
@@ -75,11 +80,12 @@ export default function(server) {
     path: '/api/new_branch_report/orders',
     method: 'POST',
     handler(req) {
-      const {from,to, region, batch} = req.payload
+      const { from, to, region, batch } = req.payload;
       const searchRequest = {
-        index:"orders",// you can also change index to another
-        size:10000,// must need,in elasticsearch ,from + size can not be more than the index.max_result_window index setting which defaults to 10,000.
-        body:{
+        index: 'orders',
+        size: 0,
+        body: {
+          _source: { include: [] },
           query:{
             bool:{
               must : {
@@ -105,8 +111,50 @@ export default function(server) {
               ]
             },
           },
-          sort: [{ "createdAt": "asc" }] // must need,We take the time of the last item of the query result as the from of the next query
-        }
+          aggs: {
+            email: {
+              terms: {
+                field: 'delivery.courier.email',
+                size: 100000,
+                order: { _count: 'desc' },
+              },
+              aggs: {
+                driverid: {
+                  terms: {
+                    field: 'delivery.courier._id',
+                    size: 100000,
+                    order: { _count: 'desc' },
+                  },
+                  aggs: {
+                    regionName: {
+                      terms: {
+                        field: 'region.name',
+                        size: 100000,
+                        order: { _count: 'desc' },
+                      },
+                      aggs: {
+                        deliveryTimeSum: { sum: { field: 'delivery.time' } },
+                        tipSum: { sum: { field: 'fees.tip.amount' } },
+                        commissionSum: { sum: { field: 'commission.driver' } },
+                        adjustmentSum: { sum: { field: 'adjustments.driver' } },
+                        distributionSum: { sum: { field: 'distribution.driver' } },
+                        uniqOrders:       {
+                          "cardinality": {
+                            "script": {
+                              "source": "if (doc['bundle.combineId.keyword'].size() !== 0){\n    return doc['bundle.combineId.keyword'].value;\n}\n\nreturn doc['_id'].value;",
+                              "lang": "painless"
+                            }
+
+                        }
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      }
       };
 
       /* Add region filter if present  */
@@ -131,24 +179,36 @@ export default function(server) {
         }
       }
 
+
       /* Add batch filter  */
       if (batch) {
-        if (!_.isArray(batch.params)) {
+        if (batch.params && !_.isArray(batch.params)) {
           batch.params = batch.params.query.split();
         }
 
-        if (batch.negate) {
-          searchRequest.body.query.bool.must_not.push({ terms:  { 'restaurant.delivery.batch.keyword': batch.params } });
+
+        if (batch.negate && batch.type === 'exists') {
+          searchRequest.body.query.bool.must_not.push({ exists:  { field: 'restaurant.delivery.batch.keyword' } });
+        } else if(!batch.negate && batch.type === 'exists') {
+          searchRequest.body.query.bool.filter.push({ exists:  { field: 'restaurant.delivery.batch.keyword' } });
+        } else if(batch.negate && batch.params) {
+          searchRequest.body.query.bool.must_not.push({ terms:  { 'restaurant.delivery.batch': batch.params } });
         } else {
-          searchRequest.body.query.bool.filter.push({ terms:  { 'restaurant.delivery.batch.keyword': batch.params } });
+          searchRequest.body.query.bool.filter.push({ terms:  { 'restaurant.delivery.batch': batch.params } });
         }
       }
 
+
+
+      /* this is the way to get data from elasticsearch directly */
       const { callWithRequest } = server.plugins.elasticsearch.getCluster('data');
-      // this is count
-      const response = callWithRequest(req,'search',searchRequest);
+      const response = callWithRequest(req, 'search', searchRequest);
+
+      /* just like GET orders/_count
+      const response = await callWithRequest(req,'count'); */
       return response;
-    }
+    },
   });
+
 
 }

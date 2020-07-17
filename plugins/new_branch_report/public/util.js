@@ -95,7 +95,7 @@ export function showTable(element, data) {
 
   /* Get data */
   const { driverShifts,
-    unassignDriverShifts, totalJobs, driverOrders } = data;
+    unassignDriverShifts, totalJobs, ordersData } = data;
 
   let totalHours = 0;
   let totalOrders = 0;
@@ -170,13 +170,12 @@ export function showTable(element, data) {
     d.push(`${_.toUpper(driverName.slice(0, 3))}${driverName.slice(3)}`);
 
     /* Get driver orders and only get uniq orders */
-    const orders = _.chain(driverOrders)
-      .get(k, [])
-      .uniqBy(o => _.get(o, 'bundle.combineId') || o._id)
-      .size();
+    const driverData = _.find(ordersData, { email: k });
 
-    const distribution = _.sumBy(_.get(driverOrders, k, []), 'distribution.driver', 0) / 100;
-    const adjustments = _.sumBy(_.get(driverOrders, k, []), 'adjustments.driver', 0) / 100;
+    const orders = _.get(driverData, 'orders', 0);
+
+    const distribution = _.get(driverData, 'distributionSum', 0) / 100;
+    const adjustments = _.get(driverData, 'adjustmentSum', 0) / 100;
     const averageDeliveryTime = _.get(summary, 'averageDeliveryTime', 0);
 
     /* Average Delivery Time */
@@ -247,7 +246,7 @@ export function showTable(element, data) {
     d.push(`$${payPerOrder.toFixed(2)}`);
 
     /* commission per order */
-    const commission = _.sumBy(_.get(driverOrders, k, []), 'commission.driver', 0) / 100;
+    const commission = _.get(driverData, 'commissionSum', 0) / 100;
 
     const commissionPerOrder = commission / orders;
 

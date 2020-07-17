@@ -75,7 +75,8 @@ export class NewBranchReportVisualizationProvider {
       .filter(v => !v.meta.disabled && v.meta.key === 'restaurant.delivery.batch.keyword')
       .map(x => ({
         negate: x.meta.negate,
-        params: x.meta.params
+        params: x.meta.params,
+        type:   x.meta.type
       }))
       .get('0')
       .value();
@@ -102,7 +103,7 @@ export class NewBranchReportVisualizationProvider {
 
     const begin = moment();
     const shifts = await getSearchDataFromEs(api.shiftSearch, params1, 'start');
-    const ordersData = await getSearchDataFromEs(api.orders, params2, 'delivery.finishAt');
+    let ordersData = await getSearchDataFromEs1(api.orders, params2);
 
     const driverShifts = _.chain(shifts)
       .map('_source')
@@ -117,9 +118,26 @@ export class NewBranchReportVisualizationProvider {
       .value();
 
     /* Get driver orders  */
-    const driverOrders = _.chain(ordersData)
-      .map(o => ({ ...o._source, _id: o._id,  }))
-      .groupBy('delivery.courier.email')
+      ordersData = _.chain(ordersData)
+      .get('data.aggregations.email.buckets')
+      .map(v => {
+
+        const driverid = _.get(v, 'driverid.buckets[0].key');
+        const data = _.get(v, 'driverid.buckets[0].regionName.buckets[0]');
+
+
+        return {
+          adjustmentSum: data.adjustmentSum.value,
+          commissionSum: data.commissionSum.value,
+          deliveryTimeSum: data.deliveryTimeSum.value,
+          distributionSum: data.distributionSum.value,
+          tipSum: data.tipSum.value,
+          orders: data.uniqOrders.value,
+          regionName: data.key,
+          email: v.key,
+          driverid,
+        };
+      })
       .value();
 
     const totalJobs = {};
@@ -156,7 +174,7 @@ export class NewBranchReportVisualizationProvider {
       driverShifts,
       unassignDriverShifts,
       totalJobs,
-      driverOrders
+      ordersData
     };
 
     /* Stop the loading */
@@ -180,14 +198,14 @@ export class NewBranchReportVisualizationProvider {
  * @param {Object} api
  * @param {Object} params (filters and timeRange from kibana)
  */
-/* async function getSearchDataFromEs(api, params) {
+async function getSearchDataFromEs1(api, params) {
   return await axios({
     method: 'post',
     url: api,
     data: { ...params },
     headers: { 'kbn-version': '7.5.2' },
   });
-} */
+}
 
 
 /**
