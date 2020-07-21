@@ -99,6 +99,7 @@ export function showTable(element, data) {
 
   let totalHours = 0;
   let totalOrders = 0;
+  let totalDistribution = 0;
 
   /* to calculate total */
   const total = {
@@ -232,6 +233,7 @@ export function showTable(element, data) {
     /* Save total Order / Hour  */
     totalOrders += orders;
     totalHours += hours;
+    totalDistribution += distribution;
 
     /* order/hour */
     const orderPerHour = _.isFinite(orders / (hours)) ? orders / (hours) : 0;
@@ -310,7 +312,14 @@ export function showTable(element, data) {
       const finalorderPerHour = _.isNaN(totalOrders / totalHours) ? 0 : (totalOrders / totalHours).toFixed(1)
       return finalorderPerHour;
     }
-    if (_.includes([7, 8, 9, 10, 11, 13, 14, 15], i)) {
+
+    /* Get the total distribution / total hour */
+    if (i === 11) {
+
+      const averagePayPerHour = _.isNaN(totalDistribution / totalHours) ? 0 : (totalDistribution / totalHours).toFixed(1);
+      return averagePayPerHour;
+    }
+    if (_.includes([7, 8, 9, 10, 13, 14, 15], i)) {
       return `$${v.toFixed(2)}`;
     }
     return v.toFixed(2);
