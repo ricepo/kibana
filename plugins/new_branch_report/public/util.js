@@ -126,7 +126,9 @@ export function showTable(element, data) {
     cambridgeFailRate: [],
   };
 
-  const totalSum = _.times(20, _.constant(0));
+  const totalSum = [...Array(20)].map(elem => new Array());
+
+  console.log(totalSum);
 
   const column = [
     'city',
@@ -180,71 +182,72 @@ export function showTable(element, data) {
     const averageDeliveryTime = _.get(summary, 'averageDeliveryTime', 0);
 
     /* Average Delivery Time */
-    totalSum[2] = _.mean([totalSum[2], (_.isNaN(averageDeliveryTime) ? 0 : averageDeliveryTime)]);
+    totalSum[2].push(_.isNaN(averageDeliveryTime) ? 0 : averageDeliveryTime);
     d.push(averageDeliveryTime.toFixed());
 
     /* Driver total orders */
-    totalSum[3] += orders;
+    totalSum[3].push(orders);
     d.push(orders);
 
 
     /* Driver online Duration */
     const onlineHours = _.get(totalJobs, k) || _.get(summary, 'hours', 0); //used fallback logic
-    totalSum[4] += onlineHours;
+    totalSum[4].push(onlineHours);
     d.push(onlineHours.toFixed(1));
 
     /* hours */
     const hours = _.get(summary, 'hours', 0);
-    totalSum[5] += hours;
+    totalSum[5].push(hours);
     d.push(hours.toFixed(1));
 
     /* Drivers Actual Hours */
     const actualHours = _.get(summary, 'actualHour', 0);
-    totalSum[6] += actualHours;
+    totalSum[6].push(actualHours);
     d.push(actualHours.toFixed(1));
 
     /* Driver distribution */
-    totalSum[7] += distribution;
+    totalSum[7].push(distribution);
     d.push(`$${distribution.toFixed()}`);
 
     const guaranteePay = (((hours) * getDriverRate(regionName)) / 100) + _.get(summary, 'adjustmentPay', 0);
     const guaranteeAdjustments = guaranteePay - distribution > 0 ? guaranteePay - distribution : 0;
 
     /* guarantee adjustments */
-    totalSum[8] += guaranteeAdjustments;
+    totalSum[8].push(guaranteeAdjustments);
     d.push(`$${guaranteeAdjustments.toFixed(2)}`);
 
     /* Driver adjustments */
-    totalSum[9] += adjustments;
+    totalSum[9].push(adjustments);
     d.push(`$${adjustments.toFixed(2)}`);
 
     /* driver dist - adj */
-    totalSum[10] += distribution - guaranteeAdjustments - adjustments;
+    totalSum[10].push(distribution - guaranteeAdjustments - adjustments);
     d.push(`$${(distribution - guaranteeAdjustments - adjustments).toFixed()}`);
 
     /* averagePayPerHour */
     const payPerHour = (distribution - guaranteeAdjustments - adjustments) / (hours);
     const finalPayPerHour = _.isFinite(payPerHour) ? payPerHour : 0;
 
-    totalSum[11] = _.mean([totalSum[11], finalPayPerHour ]);
+    /* Get mean */
+    totalSum[11].push(finalPayPerHour);
 
     d.push(`$${finalPayPerHour.toFixed(2)}`);
 
     /* Save total Order / Hour  */
     totalOrders += orders;
     totalHours += hours;
-    totalDistribution += distribution;
+    totalDistribution += (distribution - guaranteeAdjustments - adjustments);
 
     /* order/hour */
     const orderPerHour = _.isFinite(orders / (hours)) ? orders / (hours) : 0;
 
-    totalSum[12] = _.mean([totalSum[12], orderPerHour ]);
+    totalSum[12].push(orderPerHour);
     d.push(orderPerHour.toFixed(2));
 
     /* pay/order */
     const payPerOrder = (distribution - guaranteeAdjustments - adjustments) / orders;
 
-    totalSum[13] = _.mean([totalSum[13], (_.isFinite(payPerOrder) ? payPerOrder : 0)]);
+    totalSum[13].push(_.isFinite(payPerOrder) ? payPerOrder : 0);
     d.push(`$${payPerOrder.toFixed(2)}`);
 
     /* commission per order */
@@ -252,7 +255,8 @@ export function showTable(element, data) {
 
     const commissionPerOrder = commission / orders;
 
-    totalSum[14] = _.mean([totalSum[14], (_.isFinite(commissionPerOrder) ? commissionPerOrder : 0)]);
+    totalSum[14].push(_.isFinite(commissionPerOrder) ? commissionPerOrder : 0);
+
     d.push(`$${commissionPerOrder.toFixed(2)}`);
 
     /* Tips/order */
@@ -260,22 +264,23 @@ export function showTable(element, data) {
       ? payPerOrder - commissionPerOrder
       : 0;
 
-    totalSum[15] = _.mean([totalSum[15], tipPerOrder]);
+    /* Get mean */
+    totalSum[15].push(tipPerOrder);
     d.push(`$${tipPerOrder.toFixed(2)}`);
 
     const shiftHours = _.sumBy(v, 'duration') / 60;
-    totalSum[16] += shiftHours;
+    totalSum[16].push(shiftHours);
     d.push((shiftHours).toFixed(1));
 
     /* No call No Show */
     const ncns = _.get(summary, 'noCallnoShow', 0);
 
-    totalSum[17] += ncns;
+    totalSum[17].push(ncns);
     d.push(ncns);
 
     /* incompleteShift */
     const incompleteShift = _.get(summary, 'incompleteShift', 0);
-    totalSum[18] += incompleteShift;
+    totalSum[18].push(incompleteShift);
     d.push(incompleteShift);
 
     /* Late Drop */
@@ -283,7 +288,7 @@ export function showTable(element, data) {
       .get(k, [])
       .filter(v => _.get(v, 'driver.lateDrop', 0) > 0)
       .value();
-    totalSum[19] += lateDrop.length;
+    totalSum[19].push(lateDrop.length);
     d.push(lateDrop.length);
 
     const pickupFailEvent = _.get(summary, 'pickupFailEvent', 0);
@@ -300,7 +305,10 @@ export function showTable(element, data) {
   result = _.sortBy(result, v => -v[3]);
   result.unshift(column);
 
+  const dollarIndex = [7, 8, 9, 10, 11, 13, 14, 15];
   const ans = _.map(totalSum, (v, i) => {
+
+    let result = null;
 
     if (i === 0 || i === 1) {
       return '';
@@ -319,10 +327,18 @@ export function showTable(element, data) {
       const averagePayPerHour = _.isNaN(totalDistribution / totalHours) ? 0 : (totalDistribution / totalHours).toFixed(1);
       return averagePayPerHour;
     }
-    if (_.includes([7, 8, 9, 10, 13, 14, 15], i)) {
-      return `$${v.toFixed(2)}`;
+
+    /* Get mean of some values  */
+    if (_.includes([2, 11, 12, 13, 14, 15], i)) {
+
+      result = _.mean(v).toFixed(2);
+    } else {
+      result = _.sum(v).toFixed(2);
     }
-    return v.toFixed(2);
+
+    /* Add dollar sign for some values */
+    return _.includes(dollarIndex, i) ? `$${result}` : `${result}`;
+
   })
   result.push(ans);
 
