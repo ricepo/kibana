@@ -128,8 +128,6 @@ export function showTable(element, data) {
 
   const totalSum = [...Array(20)].map(elem => new Array());
 
-  console.log(totalSum);
-
   const column = [
     'city',
     'email',
