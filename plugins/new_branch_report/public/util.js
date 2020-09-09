@@ -270,8 +270,14 @@ export function showTable(element, data) {
     totalSum[16].push(shiftHours);
     d.push((shiftHours).toFixed(1));
 
+    /* Late Drop as ncns */
+    const lateDropNCNS = _.chain(unassignDriverShifts)
+    .get(k, [])
+    .filter(v => _.get(v, 'driver.lateDrop') <= 12)
+    .value();
+
     /* No call No Show */
-    const ncns = _.get(summary, 'noCallnoShow', 0);
+    const ncns = _.get(summary, 'noCallnoShow', 0) + lateDropNCNS.length;
 
     totalSum[17].push(ncns);
     d.push(ncns);
@@ -284,7 +290,7 @@ export function showTable(element, data) {
     /* Late Drop */
     const lateDrop = _.chain(unassignDriverShifts)
       .get(k, [])
-      .filter(v => _.get(v, 'driver.lateDrop', 0) > 0)
+      .filter(v => _.get(v, 'driver.lateDrop', 0) > 12)
       .value();
     totalSum[19].push(lateDrop.length);
     d.push(lateDrop.length);
