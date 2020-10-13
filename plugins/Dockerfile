@@ -1,5 +1,7 @@
 FROM docker.elastic.co/kibana/kibana:7.5.2
 
+COPY config/kibana.yml /usr/share/kibana/config/kibana.yml
+
 RUN mkdir kibana-extra
 
 COPY active_customers/build/active_customers-0.0.0.zip kibana-extra/
