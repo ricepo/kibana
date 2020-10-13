@@ -112,10 +112,13 @@
 # Specifies locale to be used for all localizable strings, dates and number formats.
 # Supported languages are the following: English - en , by default , Chinese - zh-CN .
 #i18n.locale: "en"
+# The default config
 server.name: kibana
 server.host: "0"
 elasticsearch.hosts: [ "http://elasticsearch:9200" ]
 xpack.monitoring.ui.container.elasticsearch.enabled: true
+
+# The config of okta
 xpack.security.authc.providers: [saml]
 server.xsrf.whitelist: [/api/security/v1/saml]
 xpack.security.authc.saml.realm: okta
