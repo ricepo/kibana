@@ -36,7 +36,7 @@ export default function(server) {
                       terms: {
                         field: 'customer.subscription.id',
                         size: 100000,
-                        order: { orders: 'desc' },
+                        order: { _count: 'desc' },
                         missing: '__missing__',
                       },
                     },
