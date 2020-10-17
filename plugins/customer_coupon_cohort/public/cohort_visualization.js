@@ -118,7 +118,7 @@ export class CustomerCouponCohortVisualizationProvider {
           monthly: moment(v.key_as_string).format('YYYY/MM'),
           date: v.key_as_string,
           _id: x.key,
-          coupon: _.find(x.coupon.buckets, c => /^AC-/.test(c.key)) ? 1 : 0,
+          subscription: _.find(x.subscription.buckets, c => c.key !== '__missing__' ? 1 : 0),
         }))
       )
       .flatten()
@@ -131,7 +131,7 @@ export class CustomerCouponCohortVisualizationProvider {
 
     _.map(esData, (d, day) => {
       /* Get number of the customers who use coupon which start with 'AC-' for the date */
-      const newCust = _.filter(d, ['coupon', 1]);
+      const newCust = _.filter(d, ['subscription', 1]);
       const active = _(esData)
         .slice(day + 1) // Get the customer from date after init date
         .map(x => _.intersectionBy(newCust, x, '_id').length)

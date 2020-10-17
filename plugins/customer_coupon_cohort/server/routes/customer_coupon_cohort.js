@@ -32,15 +32,14 @@ export default function(server) {
                     order: { _count: 'desc' },
                   },
                   aggs: {
-                    coupon: {
+                    subscription: {
                       terms: {
-                        field: 'coupon._id',
-                        order: {
-                          _count: 'desc',
-                        },
-                        missing: '__missing__',
-                        size: 10000,
+                        field: 'customer.subscription.id',
+                        size: 100000,
+                        order: { orders: 'desc' },
                       },
+                      missing: '__missing__',
+                      size: 10000,
                     },
                   },
                 },
