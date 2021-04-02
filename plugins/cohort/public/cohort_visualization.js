@@ -36,7 +36,13 @@ export class CohortVisualizationProvider {
     this.el = el;
     this.container = document.createElement('div');
     this.container.className = 'cohort-container';
+    this.container1 = document.createElement('div');
+    this.container1.className = 'cohort-container1';
+    this.container2 = document.createElement('div');
+    this.container2.className = 'cohort-container2';
     this.el.appendChild(this.container);
+    this.el.appendChild(this.container1);
+    this.el.appendChild(this.container2);
   }
 
   async render(visData, visParams, status) {
@@ -120,6 +126,7 @@ export class CohortVisualizationProvider {
           date: v.key_as_string,
           _id: x.key,
           orderCount: x.orderCount.value,
+          subtotal: x.totalSubtotal.value
         }))
       )
       .flatten()
@@ -129,6 +136,10 @@ export class CohortVisualizationProvider {
 
     /* format the data to generate table */
     const data = [];
+
+    const data1 = [];
+
+    const data2 = [];
 
     _.map(esData, (d, day) => {
       /* Get number of new customers for the date */
@@ -158,6 +169,66 @@ export class CohortVisualizationProvider {
       });
     });
 
+
+    _.map(esData, (d, day) => {
+      /* Get number of new customers for the date */
+      const activeCust = _.filter(d, i => i.orderCount > 0);
+      const active = _(esData)
+        .slice(day + 1) // Get the customer from date after init date
+        .map(x => _.intersectionBy(activeCust, x, '_id').length)
+        .value();
+
+      /* set value which is the last in Array */
+      if (!active.length) {
+        data1.push({
+          date: d[0].daily,
+          total: activeCust.length,
+          period: 1,
+          value: 0,
+        });
+      }
+
+      _.forEach(active, (v, k) => {
+        data1.push({
+          date: d[0].daily,
+          total: activeCust.length,
+          period: k + 1,
+          value: v,
+        });
+      });
+    });
+
+
+    _.map(esData, (d, day) => {
+      /* Get number of new customers for the date */
+      const activeCust = _.filter(d, i => i.orderCount > 0);
+      const active = _(esData)
+        .slice(day + 1) // Get the customer from date after init date
+        .map(x => _.intersectionBy(activeCust, x, '_id'))
+        .map(x => _.sumBy(x, 'subtotal'))
+        .value();
+
+      /* set value which is the last in Array */
+      if (!active.length) {
+        data2.push({
+          date: d[0].daily,
+          total: _.sumBy(activeCust, 'subtotal'),
+          period: 1,
+          value: 0,
+        });
+      }
+
+      _.forEach(active, (v, k) => {
+        data2.push({
+          date: d[0].daily,
+          total: _.sumBy(activeCust, 'subtotal'),
+          period: k + 1,
+          value: v,
+        });
+      });
+    });
+
+
     spinner.stop();
 
     const end = moment.now();
@@ -168,6 +239,10 @@ export class CohortVisualizationProvider {
     const valueFn = getValueFunction(this.vis.params);
 
     showTable(this.vis.params.mapColors, 'd', this.container, data, valueFn);
+
+    showTable(this.vis.params.mapColors, 'd', this.container1, data1, valueFn);
+
+    showTable(this.vis.params.mapColors, 'd', this.container2, data2, valueFn);
   }
 
   destroy() {

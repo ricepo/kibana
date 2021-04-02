@@ -37,6 +37,11 @@ export default function(server) {
                         field: 'customer.orderCount',
                       },
                     },
+                    totalSubtotal: {
+                      sum: {
+                        field: 'subtotal'
+                      },
+                    },
                   },
                 },
               },
