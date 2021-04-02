@@ -34,15 +34,22 @@ export class CohortVisualizationProvider {
   constructor(el, vis) {
     this.vis = vis;
     this.el = el;
+    
+    this.parentContainer = document.createElement('div');
+    this.parentContainer.className = 'cohort-parentContainer';
+
     this.container = document.createElement('div');
     this.container.className = 'cohort-container';
     this.container1 = document.createElement('div');
-    this.container1.className = 'cohort-container1';
+    this.container1.className = 'cohort-container';
     this.container2 = document.createElement('div');
-    this.container2.className = 'cohort-container2';
-    this.el.appendChild(this.container);
-    this.el.appendChild(this.container1);
-    this.el.appendChild(this.container2);
+    this.container2.className = 'cohort-container';
+    this.parentContainer.appendChild(this.container);
+    this.parentContainer.appendChild(this.container1);
+    this.parentContainer.appendChild(this.container2);
+
+
+    this.el.appendChild(this.parentContainer);
   }
 
   async render(visData, visParams, status) {
