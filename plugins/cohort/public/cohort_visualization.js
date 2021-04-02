@@ -97,6 +97,10 @@ export class CohortVisualizationProvider {
         period = 'monthly';
         interval = '1M';
         break;
+      case 'yearly':
+        period = 'yearly';
+        interval = '1y';
+        break;
       default:
         period = 'weekly';
         interval = '1w';
@@ -130,6 +134,7 @@ export class CohortVisualizationProvider {
           daily: moment(v.key_as_string).format('YYYY/MM/DD'),
           weekly: `${moment(v.key_as_string).format('YYYY')}/${moment(v.key_as_string).isoWeeks()}`,
           monthly: moment(v.key_as_string).format('YYYY/MM'),
+          yearly: moment(v.key_as_string).format('YYYY'),
           date: v.key_as_string,
           _id: x.key,
           orderCount: x.orderCount.value,
