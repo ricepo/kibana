@@ -180,7 +180,7 @@ export function showTable(element, data) {
     const averageDeliveryTime = _.get(summary, 'averageDeliveryTime', 0);
 
     /* Average Delivery Time */
-    totalSum[2].push(_.isNaN(averageDeliveryTime) ? 0 : averageDeliveryTime);
+    totalSum[2].push(averageDeliveryTime.toFixed());
     d.push(averageDeliveryTime.toFixed());
 
     /* Driver total orders */
@@ -190,36 +190,36 @@ export function showTable(element, data) {
 
     /* Driver online Duration */
     const onlineHours = _.get(totalJobs, k) || _.get(summary, 'hours', 0); //used fallback logic
-    totalSum[4].push(onlineHours);
+    totalSum[4].push(onlineHours.toFixed(1));
     d.push(onlineHours.toFixed(1));
 
     /* hours */
     const hours = _.get(summary, 'hours', 0);
-    totalSum[5].push(hours);
+    totalSum[5].push(hours.toFixed(1));
     d.push(hours.toFixed(1));
 
     /* Drivers Actual Hours */
     const actualHours = _.get(summary, 'actualHour', 0);
-    totalSum[6].push(actualHours);
+    totalSum[6].push(actualHours.toFixed(1));
     d.push(actualHours.toFixed(1));
 
     /* Driver distribution */
-    totalSum[7].push(distribution);
+    totalSum[7].push(distribution.toFixed());
     d.push(`$${distribution.toFixed()}`);
 
     const guaranteePay = (((hours) * getDriverRate(regionName)) / 100) + _.get(summary, 'adjustmentPay', 0);
     const guaranteeAdjustments = guaranteePay - distribution > 0 ? guaranteePay - distribution : 0;
 
     /* guarantee adjustments */
-    totalSum[8].push(guaranteeAdjustments);
+    totalSum[8].push(guaranteeAdjustments.toFixed(2));
     d.push(`$${guaranteeAdjustments.toFixed(2)}`);
 
     /* Driver adjustments */
-    totalSum[9].push(adjustments);
+    totalSum[9].push(adjustments.toFixed(2));
     d.push(`$${adjustments.toFixed(2)}`);
 
     /* driver dist - adj */
-    totalSum[10].push(distribution - guaranteeAdjustments - adjustments);
+    totalSum[10].push((distribution - guaranteeAdjustments - adjustments).toFixed());
     d.push(`$${(distribution - guaranteeAdjustments - adjustments).toFixed()}`);
 
     /* averagePayPerHour */
@@ -227,7 +227,7 @@ export function showTable(element, data) {
     const finalPayPerHour = _.isFinite(payPerHour) ? payPerHour : 0;
 
     /* Get mean */
-    totalSum[11].push(finalPayPerHour);
+    totalSum[11].push(finalPayPerHour.toFixed(2));
 
     d.push(`$${finalPayPerHour.toFixed(2)}`);
 
@@ -239,13 +239,13 @@ export function showTable(element, data) {
     /* order/hour */
     const orderPerHour = _.isFinite(orders / (hours)) ? orders / (hours) : 0;
 
-    totalSum[12].push(orderPerHour);
+    totalSum[12].push(orderPerHour.toFixed(2));
     d.push(orderPerHour.toFixed(2));
 
     /* pay/order */
     const payPerOrder = (distribution - guaranteeAdjustments - adjustments) / orders;
 
-    totalSum[13].push(_.isFinite(payPerOrder) ? payPerOrder : 0);
+    totalSum[13].push(payPerOrder.toFixed(2));
     d.push(`$${payPerOrder.toFixed(2)}`);
 
     /* commission per order */
@@ -253,7 +253,7 @@ export function showTable(element, data) {
 
     const commissionPerOrder = commission / orders;
 
-    totalSum[14].push(_.isFinite(commissionPerOrder) ? commissionPerOrder : 0);
+    totalSum[14].push(commissionPerOrder.toFixed(2));
 
     d.push(`$${commissionPerOrder.toFixed(2)}`);
 
@@ -263,11 +263,11 @@ export function showTable(element, data) {
       : 0;
 
     /* Get mean */
-    totalSum[15].push(tipPerOrder);
+    totalSum[15].push(tipPerOrder.toFixed(2));
     d.push(`$${tipPerOrder.toFixed(2)}`);
 
     const shiftHours = _.sumBy(v, 'duration') / 60;
-    totalSum[16].push(shiftHours);
+    totalSum[16].push((shiftHours).toFixed(1));
     d.push((shiftHours).toFixed(1));
 
     /* Late Drop as ncns */
@@ -318,6 +318,16 @@ export function showTable(element, data) {
       return '';
     }
 
+    /* Parse value from string to float */
+    const values = _.map(v, val => {
+
+      const int = parseFloat(val);
+
+      if (!_.isFinite(int)) { return 0; }
+
+      return int;
+    });
+
     /* Get the final order per hour */
     if (i === 12) {
 
@@ -335,9 +345,12 @@ export function showTable(element, data) {
     /* Get mean of some values  */
     if (_.includes([2, 11, 12, 13, 14, 15], i)) {
 
-      result = _.mean(v).toFixed(2);
+      const a = _.filter(values, v => v > 0);
+      result = _.mean(a).toFixed(2);
+
     } else {
-      result = _.sum(v).toFixed(2);
+
+      result = _.sum(values).toFixed(2);
     }
 
     /* Add dollar sign for some values */
