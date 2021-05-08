@@ -154,90 +154,93 @@ export class CohortVisualizationProvider {
     const data2 = [];
 
     _.map(esData, (d, day) => {
-      /* Get number of new customers for the date */
-      const newCust = _.filter(d, ['orderCount', 0]);
-      const active = _(esData)
-        .slice(day + 1) // Get the customer from date after init date
-        .map(x => _.intersectionBy(newCust, x, '_id').length)
-        .value();
-
-      /* set value which is the last in Array */
-      if (!active.length) {
-        data.push({
-          date: d[0].daily,
-          total: newCust.length,
-          period: 1,
-          value: 0,
+      /**
+       * table 1
+       */
+      {
+        /* Get number of new customers for the date */
+        const newCust = _.filter(d, ['orderCount', 0]);
+        const active = _(esData)
+          .slice(day + 1) // Get the customer from date after init date
+          .map(x => _.intersectionBy(newCust, x, '_id').length)
+          .value();
+  
+        /* set value which is the last in Array */
+        if (!active.length) {
+          data.push({
+            date: d[0].daily,
+            total: newCust.length,
+            period: 1,
+            value: 0,
+          });
+        }
+  
+        _.forEach(active, (v, k) => {
+          data.push({
+            date: d[0].daily,
+            total: newCust.length,
+            period: k + 1,
+            value: v,
+          });
         });
       }
+      /**
+       * table 2
+       */
+      {
+        const active = _(esData)
+          .slice(day + 1) // Get the customer from date after init date
+          .map(x => _.intersectionBy(d, x, '_id').length)
+          .value();
 
-      _.forEach(active, (v, k) => {
-        data.push({
-          date: d[0].daily,
-          total: newCust.length,
-          period: k + 1,
-          value: v,
-        });
-      });
-    });
+        /* set value which is the last in Array */
+        if (!active.length) {
+          data1.push({
+            date: d[0].daily,
+            total: d.length,
+            period: 1,
+            value: 0,
+          });
+        }
 
-
-    _.map(esData, (d, day) => {
-      /* Get number of new customers for the date */
-      const activeCust = _.filter(d, i => i.orderCount > 0);
-      const active = _(esData)
-        .slice(day + 1) // Get the customer from date after init date
-        .map(x => _.intersectionBy(activeCust, x, '_id').length)
-        .value();
-
-      /* set value which is the last in Array */
-      if (!active.length) {
-        data1.push({
-          date: d[0].daily,
-          total: activeCust.length,
-          period: 1,
-          value: 0,
-        });
-      }
-
-      _.forEach(active, (v, k) => {
-        data1.push({
-          date: d[0].daily,
-          total: activeCust.length,
-          period: k + 1,
-          value: v,
-        });
-      });
-    });
-
-
-    _.map(esData, (d, day) => {
-      /* Get number of new customers for the date */
-      const activeCust = _.filter(d, i => i.orderCount > 0);
-      const active = _(esData)
-        .slice(day + 1) // Get the customer from date after init date
-        .map(x => _.intersectionBy(activeCust, x, '_id'))
-        .map(x => _.sumBy(x, 'subtotal'))
-        .value();
-
-      /* set value which is the last in Array */
-      if (!active.length) {
-        data2.push({
-          date: d[0].daily,
-          total: _.sumBy(activeCust, 'subtotal'),
-          period: 1,
-          value: 0,
+        _.forEach(active, (v, k) => {
+          data1.push({
+            date: d[0].daily,
+            total: d.length,
+            period: k + 1,
+            value: v,
+          });
         });
       }
-
-      _.forEach(active, (v, k) => {
-        data2.push({
-          date: d[0].daily,
-          total: _.sumBy(activeCust, 'subtotal'),
-          period: k + 1,
-          value: v,
+      /**
+       * table 3
+       */
+      {
+        const active = _(esData)
+          .slice(day + 1) // Get the customer from date after init date
+          .map(x => _.intersectionBy(d, x, '_id'))
+          .map(x => _.sumBy(x, 'subtotal'))
+          .value();
+  
+        /* set value which is the last in Array */
+        if (!active.length) {
+          data2.push({
+            date: d[0].daily,
+            total: _.sumBy(d, 'subtotal'),
+            period: 1,
+            value: 0,
+          });
+        }
+  
+        _.forEach(active, (v, k) => {
+          data2.push({
+            date: d[0].daily,
+            total: _.sumBy(d, 'subtotal'),
+            period: k + 1,
+            value: v,
+          });
         });
-      });
+      }
     });
 
 
