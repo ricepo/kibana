@@ -138,7 +138,7 @@ export class CohortVisualizationProvider {
           date: v.key_as_string,
           _id: x.key,
           orderCount: x.orderCount.value,
-          subtotal: x.totalSubtotal.value
+          total: x.total.value
         }))
       )
       .flatten()
@@ -216,17 +216,18 @@ export class CohortVisualizationProvider {
        * table 3
        */
       {
+        const customerIds = _.map(d,'_id');
         const active = _(esData)
           .slice(day + 1) // Get the customer from date after init date
-          .map(x => _.intersectionBy(d, x, '_id'))
-          .map(x => _.sumBy(x, 'subtotal'))
+          .map(x => _.filter(x, i => _.includes(customerIds, i._id)))
+          .map(x => _.sumBy(x, 'total'))
           .value();
-  
+
         /* set value which is the last in Array */
         if (!active.length) {
           data2.push({
             date: d[0].daily,
-            total: _.sumBy(d, 'subtotal'),
+            total: _.sumBy(d, 'total'),
             period: 1,
             value: 0,
           });
@@ -235,7 +236,7 @@ export class CohortVisualizationProvider {
         _.forEach(active, (v, k) => {
           data2.push({
             date: d[0].daily,
-            total: _.sumBy(d, 'subtotal'),
+            total: _.sumBy(d, 'total'),
             period: k + 1,
             value: v,
           });
@@ -263,6 +264,10 @@ export class CohortVisualizationProvider {
   destroy() {
     this.container.parentNode.removeChild(this.container);
     this.container = null;
+    this.container1.parentNode.removeChild(this.container1);
+    this.container1 = null;
+    this.container2.parentNode.removeChild(this.container2);
+    this.container2 = null;
   }
 }
 
