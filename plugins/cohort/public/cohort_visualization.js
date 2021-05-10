@@ -44,9 +44,12 @@ export class CohortVisualizationProvider {
     this.container1.className = 'cohort-container';
     this.container2 = document.createElement('div');
     this.container2.className = 'cohort-container';
+    this.container3 = document.createElement('div');
+    this.container3.className = 'cohort-container';
     this.parentContainer.appendChild(this.container);
     this.parentContainer.appendChild(this.container1);
     this.parentContainer.appendChild(this.container2);
+    this.parentContainer.appendChild(this.container3);
 
 
     this.el.appendChild(this.parentContainer);
@@ -114,37 +117,24 @@ export class CohortVisualizationProvider {
     const begin = moment.now();
 
     /* requset es(elasticsearch) */
-    let esData = await getDataFromEs(params);
+    let [customerData,driverData] = _.map(await Promise.all([
+      getCustomersFromEs(params),
+      getDriversFromEs(params)
+    ]),'data.aggregations.date.buckets')
 
-    esData = _.get(esData, 'data.aggregations.date.buckets');
 
     const pullDataEnd = moment.now();
 
     console.log(`获取数据共花费${(pullDataEnd - begin) / 1000}s`);
 
-    if (!esData.length) {
+    if (!customerData.length) {
       spinner.stop();
 
       return;
     }
 
-    esData = _.chain(esData)
-      .map(v =>
-        _.map(v.customer.buckets, x => ({
-          daily: moment(v.key_as_string).format('YYYY/MM/DD'),
-          weekly: `${moment(v.key_as_string).format('YYYY')}/${moment(v.key_as_string).isoWeeks()}`,
-          monthly: moment(v.key_as_string).format('YYYY/MM'),
-          yearly: moment(v.key_as_string).format('YYYY'),
-          date: v.key_as_string,
-          _id: x.key,
-          orderCount: x.orderCount.value,
-          total: x.total.value
-        }))
-      )
-      .flatten()
-      .groupBy(v => v[period])
-      .values()
-      .value();
+    customerData = parseData(customerData,period)
+    driverData = parseData(driverData,period)
 
     /* format the data to generate table */
     const data = [];
@@ -153,14 +143,17 @@ export class CohortVisualizationProvider {
 
     const data2 = [];
 
-    _.map(esData, (d, day) => {
+    /**
+     * data for customer 
+     */
+    _.map(customerData, (d, day) => {
       /**
        * table 1
        */
       {
         /* Get number of new customers for the date */
         const newCust = _.filter(d, ['orderCount', 0]);
-        const active = _(esData)
+        const active = _(customerData)
           .slice(day + 1) // Get the customer from date after init date
           .map(x => _.intersectionBy(newCust, x, '_id').length)
           .value();
@@ -188,7 +181,7 @@ export class CohortVisualizationProvider {
        * table 2
        */
       {
-        const active = _(esData)
+        const active = _(customerData)
           .slice(day + 1) // Get the customer from date after init date
           .map(x => _.intersectionBy(d, x, '_id').length)
           .value();
@@ -217,7 +210,7 @@ export class CohortVisualizationProvider {
        */
       {
         const customerIds = _.map(d,'_id');
-        const active = _(esData)
+        const active = _(customerData)
           .slice(day + 1) // Get the customer from date after init date
           .map(x => _.filter(x, i => _.includes(customerIds, i._id)))
           .map(x => _.sumBy(x, 'total'))
@@ -244,6 +237,40 @@ export class CohortVisualizationProvider {
       }
     });
 
+    /**
+     * data for driver 
+     */
+    const data3 = [];
+    _.map(driverData, (d, day) => {
+      /**
+       * table 4
+       */
+      {
+        const active = _(driverData)
+          .slice(day + 1) // Get the customer from date after init date
+          .map(x => _.intersectionBy(d, x, '_id').length)
+          .value();
+
+        /* set value which is the last in Array */
+        if (!active.length) {
+          data3.push({
+            date: d[0].daily,
+            total: d.length,
+            period: 1,
+            value: 0,
+          });
+        }
+
+        _.forEach(active, (v, k) => {
+          data3.push({
+            date: d[0].daily,
+            total: d.length,
+            period: k + 1,
+            value: v,
+          });
+        });
+      }
+    });
 
     spinner.stop();
 
@@ -259,6 +286,8 @@ export class CohortVisualizationProvider {
     showTable(this.vis.params.mapColors, 'd', this.container1, data1, valueFn);
 
     showTable(this.vis.params.mapColors, 'd', this.container2, data2, valueFn);
+
+    showTable(this.vis.params.mapColors, 'd', this.container3, data3, valueFn);
   }
 
   destroy() {
@@ -268,18 +297,58 @@ export class CohortVisualizationProvider {
     this.container1 = null;
     this.container2.parentNode.removeChild(this.container2);
     this.container2 = null;
+    this.container3.parentNode.removeChild(this.container3);
+    this.container3 = null;
   }
 }
 
 /**
- * get data directly from es
+ * get customer data directly from es
  * @param {Object} (filters and timeRange from kibana)
  */
-async function getDataFromEs(params) {
+async function getCustomersFromEs(params) {
   return await axios({
     method: 'post',
-    url: '../api/cohort/query',
+    url: '../api/cohort/query/customers',
     data: { ...params },
     headers: { 'kbn-version': '7.5.2' },
   });
+}
+
+/**
+ * get driver data directly from es
+ * @param {Object} (filters and timeRange from kibana)
+ */
+ async function getDriversFromEs(params) {
+  return await axios({
+    method: 'post',
+    url: '../api/cohort/query/drivers',
+    data: { ...params },
+    headers: { 'kbn-version': '7.5.2' },
+  });
+}
+
+/**
+ * parse data to generate table
+ * @param data   {Object} (data from es)
+ * @param period {Object} (group by [day or week or month])
+ */
+function parseData(data,period){
+  return _.chain(data)
+  .map(v =>
+    _.map(v.customer.buckets, x => ({
+      daily: moment(v.key_as_string).format('YYYY/MM/DD'),
+      weekly: `${moment(v.key_as_string).format('YYYY')}/${moment(v.key_as_string).isoWeeks()}`,
+      monthly: moment(v.key_as_string).format('YYYY/MM'),
+      yearly: moment(v.key_as_string).format('YYYY'),
+      date: v.key_as_string,
+      _id: x.key,
+      orderCount: _.get(x,'orderCount.value'),
+      total: _.get(x,'total.value')
+    }))
+  )
+  .flatten()
+  .groupBy(v => v[period])
+  .values()
+  .value();
 }
