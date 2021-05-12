@@ -46,10 +46,13 @@ export class CohortVisualizationProvider {
     this.container2.className = 'cohort-container';
     this.container3 = document.createElement('div');
     this.container3.className = 'cohort-container';
+    this.container4 = document.createElement('div');
+    this.container4.className = 'cohort-container';
     this.parentContainer.appendChild(this.container);
     this.parentContainer.appendChild(this.container1);
     this.parentContainer.appendChild(this.container2);
     this.parentContainer.appendChild(this.container3);
+    this.parentContainer.appendChild(this.container4);
 
 
     this.el.appendChild(this.parentContainer);
@@ -143,6 +146,10 @@ export class CohortVisualizationProvider {
 
     const data2 = [];
 
+    const data3 = [];
+
+    const data4 = [];
+
     /**
      * data for customer 
      */
@@ -181,6 +188,37 @@ export class CohortVisualizationProvider {
        * table 2
        */
       {
+        const newCust = _.filter(d, ['orderCount', 0]);
+        const customerIds = _.map(newCust,'_id');
+        const active = _(customerData)
+          .slice(day + 1) // Get the customer from date after init date
+          .map(x => _.filter(x, i => _.includes(customerIds, i._id)))
+          .map(x => _.sumBy(x, 'total'))
+          .value();
+
+        /* set value which is the last in Array */
+        if (!active.length) {
+          data1.push({
+            date: d[0].daily,
+            total: _.sumBy(d, 'total'),
+            period: 1,
+            value: 0,
+          });
+        }
+  
+        _.forEach(active, (v, k) => {
+          data1.push({
+            date: d[0].daily,
+            total: _.sumBy(d, 'total'),
+            period: k + 1,
+            value: v,
+          });
+        });
+      }
+      /**
+       * table 3
+       */
+      {
         const active = _(customerData)
           .slice(day + 1) // Get the customer from date after init date
           .map(x => _.intersectionBy(d, x, '_id').length)
@@ -188,7 +226,7 @@ export class CohortVisualizationProvider {
 
         /* set value which is the last in Array */
         if (!active.length) {
-          data1.push({
+          data2.push({
             date: d[0].daily,
             total: d.length,
             period: 1,
@@ -197,7 +235,7 @@ export class CohortVisualizationProvider {
         }
 
         _.forEach(active, (v, k) => {
-          data1.push({
+          data2.push({
             date: d[0].daily,
             total: d.length,
             period: k + 1,
@@ -206,7 +244,7 @@ export class CohortVisualizationProvider {
         });
       }
       /**
-       * table 3
+       * table 4
        */
       {
         const customerIds = _.map(d,'_id');
@@ -218,7 +256,7 @@ export class CohortVisualizationProvider {
 
         /* set value which is the last in Array */
         if (!active.length) {
-          data2.push({
+          data3.push({
             date: d[0].daily,
             total: _.sumBy(d, 'total'),
             period: 1,
@@ -227,7 +265,7 @@ export class CohortVisualizationProvider {
         }
   
         _.forEach(active, (v, k) => {
-          data2.push({
+          data3.push({
             date: d[0].daily,
             total: _.sumBy(d, 'total'),
             period: k + 1,
@@ -240,7 +278,7 @@ export class CohortVisualizationProvider {
     /**
      * data for driver 
      */
-    const data3 = [];
+    const data4 = [];
     _.map(driverData, (d, day) => {
       /**
        * table 4
@@ -253,7 +291,7 @@ export class CohortVisualizationProvider {
 
         /* set value which is the last in Array */
         if (!active.length) {
-          data3.push({
+          data4.push({
             date: d[0].daily,
             total: d.length,
             period: 1,
@@ -262,7 +300,7 @@ export class CohortVisualizationProvider {
         }
 
         _.forEach(active, (v, k) => {
-          data3.push({
+          data4.push({
             date: d[0].daily,
             total: d.length,
             period: k + 1,
@@ -288,6 +326,8 @@ export class CohortVisualizationProvider {
     showTable(this.vis.params.mapColors, 'd', this.container2, data2, valueFn);
 
     showTable(this.vis.params.mapColors, 'd', this.container3, data3, valueFn);
+
+    showTable(this.vis.params.mapColors, 'd', this.container4, data4, valueFn);
   }
 
   destroy() {
@@ -299,6 +339,8 @@ export class CohortVisualizationProvider {
     this.container2 = null;
     this.container3.parentNode.removeChild(this.container3);
     this.container3 = null;
+    this.container4.parentNode.removeChild(this.container4);
+    this.container4 = null;
   }
 }
 
