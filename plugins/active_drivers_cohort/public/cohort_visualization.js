@@ -35,18 +35,11 @@ export class CohortVisualizationProvider {
     this.vis = vis;
     this.el = el;
     
-    this.parentContainer = document.createElement('div');
-    this.parentContainer.className = 'cohort-parentContainer';
-
     this.container = document.createElement('div');
     this.container.className = 'cohort-container';
-    this.container1 = document.createElement('div');
-    this.container1.className = 'cohort-container';
-    this.parentContainer.appendChild(this.container);
-    this.parentContainer.appendChild(this.container1);
 
 
-    this.el.appendChild(this.parentContainer);
+    this.el.appendChild(this.container);
   }
 
   async render(visData, visParams, status) {
@@ -106,86 +99,47 @@ export class CohortVisualizationProvider {
 
     const begin = moment.now();
 
-     /* requset es(elasticsearch) */
-    let customerData = _.get(await getCustomersFromEs(params),'data.aggregations.date.buckets',[])
-  
+    /* requset es(elasticsearch) */
+    let driverData = _.get(await getDriversFromEs(params),'data.aggregations.date.buckets',[])
+
     const pullDataEnd = moment.now();
 
     console.log(`获取数据共花费${(pullDataEnd - begin) / 1000}s`);
 
-    if (!customerData.length) {
+    if (!driverData.length) {
       spinner.stop();
 
       return;
     }
 
-    customerData = parseData(customerData,period)
+    driverData = parseData(driverData,period)
 
     /* format the data to generate table */
     const data = [];
-
-    const data1 = [];
-
-    /**
-     * data for customer 
-     */
-    _.map(customerData, (d, day) => {
+    _.map(driverData, (d, day) => {
       /**
        * table 1
        */
       {
-        /* Get number of new customers for the date */
-        const newCust = _.filter(d, ['orderCount', 0]);
-        const active = _(customerData)
+        const active = _(driverData)
           .slice(day + 1) // Get the customer from date after init date
-          .map(x => _.intersectionBy(newCust, x, '_id').length)
-          .value();
-  
-        /* set value which is the last in Array */
-        if (!active.length) {
-          data.push({
-            date: d[0].daily,
-            total: newCust.length,
-            period: 1,
-            value: 0,
-          });
-        }
-  
-        _.forEach(active, (v, k) => {
-          data.push({
-            date: d[0].daily,
-            total: newCust.length,
-            period: k + 1,
-            value: v,
-          });
-        });
-      }
-      /**
-       * table 2
-       */
-      {
-        const newCust = _.filter(d, ['orderCount', 0]);
-        const customerIds = _.map(newCust,'_id');
-        const active = _(customerData)
-          .slice(day + 1) // Get the customer from date after init date
-          .map(x => _.filter(x, i => _.includes(customerIds, i._id)))
-          .map(x => _.sumBy(x, 'total'))
+          .map(x => _.intersectionBy(d, x, '_id').length)
           .value();
 
         /* set value which is the last in Array */
         if (!active.length) {
-          data1.push({
+          data.push({
             date: d[0].daily,
-            total: _.sumBy(newCust, 'total'),
+            total: d.length,
             period: 1,
             value: 0,
           });
         }
-  
+
         _.forEach(active, (v, k) => {
-          data1.push({
+          data.push({
             date: d[0].daily,
-            total: _.sumBy(newCust, 'total'),
+            total: d.length,
             period: k + 1,
             value: v,
           });
@@ -203,26 +157,23 @@ export class CohortVisualizationProvider {
     const valueFn = getValueFunction(this.vis.params);
 
     showTable(this.vis.params.mapColors, 'd', this.container, data, valueFn);
-
-    showTable(this.vis.params.mapColors, 'd', this.container1, data1, valueFn);
   }
 
   destroy() {
     this.container.parentNode.removeChild(this.container);
     this.container = null;
-    this.container1.parentNode.removeChild(this.container1);
-    this.container1 = null;
   }
 }
 
+
 /**
- * get customer data directly from es
+ * get driver data directly from es
  * @param {Object} (filters and timeRange from kibana)
  */
-async function getCustomersFromEs(params) {
+ async function getDriversFromEs(params) {
   return await axios({
     method: 'post',
-    url: '../api/cohort/query/customers',
+    url: '../api/active_drivers_cohort/query/drivers',
     data: { ...params },
     headers: { 'kbn-version': '7.5.2' },
   });

@@ -106,9 +106,10 @@ export class CohortVisualizationProvider {
 
     const begin = moment.now();
 
-     /* requset es(elasticsearch) */
+    /* requset es(elasticsearch) */
     let customerData = _.get(await getCustomersFromEs(params),'data.aggregations.date.buckets',[])
-  
+
+
     const pullDataEnd = moment.now();
 
     console.log(`获取数据共花费${(pullDataEnd - begin) / 1000}s`);
@@ -134,27 +135,25 @@ export class CohortVisualizationProvider {
        * table 1
        */
       {
-        /* Get number of new customers for the date */
-        const newCust = _.filter(d, ['orderCount', 0]);
         const active = _(customerData)
           .slice(day + 1) // Get the customer from date after init date
-          .map(x => _.intersectionBy(newCust, x, '_id').length)
+          .map(x => _.intersectionBy(d, x, '_id').length)
           .value();
-  
+
         /* set value which is the last in Array */
         if (!active.length) {
           data.push({
             date: d[0].daily,
-            total: newCust.length,
+            total: d.length,
             period: 1,
             value: 0,
           });
         }
-  
+
         _.forEach(active, (v, k) => {
           data.push({
             date: d[0].daily,
-            total: newCust.length,
+            total: d.length,
             period: k + 1,
             value: v,
           });
@@ -164,8 +163,7 @@ export class CohortVisualizationProvider {
        * table 2
        */
       {
-        const newCust = _.filter(d, ['orderCount', 0]);
-        const customerIds = _.map(newCust,'_id');
+        const customerIds = _.map(d,'_id');
         const active = _(customerData)
           .slice(day + 1) // Get the customer from date after init date
           .map(x => _.filter(x, i => _.includes(customerIds, i._id)))
@@ -176,7 +174,7 @@ export class CohortVisualizationProvider {
         if (!active.length) {
           data1.push({
             date: d[0].daily,
-            total: _.sumBy(newCust, 'total'),
+            total: _.sumBy(d, 'total'),
             period: 1,
             value: 0,
           });
@@ -185,7 +183,7 @@ export class CohortVisualizationProvider {
         _.forEach(active, (v, k) => {
           data1.push({
             date: d[0].daily,
-            total: _.sumBy(newCust, 'total'),
+            total: _.sumBy(d, 'total'),
             period: k + 1,
             value: v,
           });
@@ -222,7 +220,7 @@ export class CohortVisualizationProvider {
 async function getCustomersFromEs(params) {
   return await axios({
     method: 'post',
-    url: '../api/cohort/query/customers',
+    url: '../api/active_customers_cohort/query/customers',
     data: { ...params },
     headers: { 'kbn-version': '7.5.2' },
   });

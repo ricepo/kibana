@@ -6,7 +6,7 @@ import _ from 'lodash';
  */
 export default function(server) {
   server.route({
-    path: '/api/cohort/query/customers',
+    path: '/api/active_drivers_cohort/query/drivers',
     method: 'POST',
     handler: async req => {
       const { interval, query } = req.payload;
@@ -27,21 +27,9 @@ export default function(server) {
               aggs: {
                 customer: {
                   terms: {
-                    field: 'customer._id',
+                    field: 'delivery.courier._id',
                     size: 1000000,
                     order: { _count: 'desc' },
-                  },
-                  aggs: {
-                    orderCount: {
-                      min: {
-                        field: 'customer.orderCount',
-                      },
-                    },
-                    total: {
-                      sum: {
-                        field: 'total'
-                      },
-                    },
                   },
                 },
               },

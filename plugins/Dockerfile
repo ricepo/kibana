@@ -15,6 +15,8 @@ COPY new_drivers_cohort/build/new_drivers_cohort-0.0.0.zip kibana-extra/
 COPY restaurant_monthly_report/build/restaurant_monthly_report-0.0.0.zip kibana-extra/
 COPY customer_coupon_cohort/build/customer_coupon_cohort-0.0.0.zip kibana-extra/
 COPY new_branch_report/build/new_branch_report-0.0.0.zip kibana-extra/
+COPY active_customers_cohort/build/active_customers_cohort-0.0.0.zip kibana-extra/
+COPY active_drivers_cohort/build/active_drivers_cohort-0.0.0.zip kibana-extra/
 
 RUN kibana-plugin install file:///usr/share/kibana/kibana-extra/active_customers-0.0.0.zip
 RUN kibana-plugin install file:///usr/share/kibana/kibana-extra/cohort-0.0.0.zip
@@ -27,6 +29,8 @@ RUN kibana-plugin install file:///usr/share/kibana/kibana-extra/new_drivers_coho
 RUN kibana-plugin install file:///usr/share/kibana/kibana-extra/restaurant_monthly_report-0.0.0.zip
 RUN kibana-plugin install file:///usr/share/kibana/kibana-extra/customer_coupon_cohort-0.0.0.zip
 RUN kibana-plugin install file:///usr/share/kibana/kibana-extra/new_branch_report-0.0.0.zip
+RUN kibana-plugin install file:///usr/share/kibana/kibana-extra/active_customers_cohort-0.0.0.zip
+RUN kibana-plugin install file:///usr/share/kibana/kibana-extra/active_drivers_cohort-0.0.0.zip
 RUN kibana-plugin install https://github.com/fbaligand/kibana-enhanced-table/releases/download/v1.8.0/enhanced-table-1.8.0_7.5.2.zip
 
 

@@ -6,7 +6,7 @@ import _ from 'lodash';
  */
 export default function(server) {
   server.route({
-    path: '/api/cohort/query/customers',
+    path: '/api/active_customers_cohort/query/customers',
     method: 'POST',
     handler: async req => {
       const { interval, query } = req.payload;

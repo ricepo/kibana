@@ -10,10 +10,10 @@ import { setup } from '../../../src/legacy/core_plugins/visualizations/public/np
 
 export default function CohortTypeProvider() {
   return visFactory.createBaseVisualization({
-    name: 'cohort',
-    title: 'New Customers Cohort',
+    name: 'active_customers_cohort',
+    title: 'Active Customers Cohort',
     icon: 'stopFilled',
-    description: 'Cohort analysis plugin',
+    description: 'Active Customers Cohort',
     visualization: CohortVisualizationProvider,
     visConfig: {
       defaults: {
