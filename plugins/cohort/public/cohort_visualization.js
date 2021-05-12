@@ -34,7 +34,7 @@ export class CohortVisualizationProvider {
   constructor(el, vis) {
     this.vis = vis;
     this.el = el;
-    
+
     this.parentContainer = document.createElement('div');
     this.parentContainer.className = 'cohort-parentContainer';
 
@@ -44,7 +44,6 @@ export class CohortVisualizationProvider {
     this.container1.className = 'cohort-container';
     this.parentContainer.appendChild(this.container);
     this.parentContainer.appendChild(this.container1);
-
 
     this.el.appendChild(this.parentContainer);
   }
@@ -106,9 +105,13 @@ export class CohortVisualizationProvider {
 
     const begin = moment.now();
 
-     /* requset es(elasticsearch) */
-    let customerData = _.get(await getCustomersFromEs(params),'data.aggregations.date.buckets',[])
-  
+    /* requset es(elasticsearch) */
+    let customerData = _.get(
+      await getCustomersFromEs(params),
+      'data.aggregations.date.buckets',
+      []
+    );
+
     const pullDataEnd = moment.now();
 
     console.log(`获取数据共花费${(pullDataEnd - begin) / 1000}s`);
@@ -119,7 +122,7 @@ export class CohortVisualizationProvider {
       return;
     }
 
-    customerData = parseData(customerData,period)
+    customerData = parseData(customerData, period);
 
     /* format the data to generate table */
     const data = [];
@@ -127,7 +130,7 @@ export class CohortVisualizationProvider {
     const data1 = [];
 
     /**
-     * data for customer 
+     * data for customer
      */
     _.map(customerData, (d, day) => {
       /**
@@ -140,7 +143,7 @@ export class CohortVisualizationProvider {
           .slice(day + 1) // Get the customer from date after init date
           .map(x => _.intersectionBy(newCust, x, '_id').length)
           .value();
-  
+
         /* set value which is the last in Array */
         if (!active.length) {
           data.push({
@@ -150,7 +153,7 @@ export class CohortVisualizationProvider {
             value: 0,
           });
         }
-  
+
         _.forEach(active, (v, k) => {
           data.push({
             date: d[0].daily,
@@ -165,7 +168,7 @@ export class CohortVisualizationProvider {
        */
       {
         const newCust = _.filter(d, ['orderCount', 0]);
-        const customerIds = _.map(newCust,'_id');
+        const customerIds = _.map(newCust, '_id');
         const active = _(customerData)
           .slice(day + 1) // Get the customer from date after init date
           .map(x => _.filter(x, i => _.includes(customerIds, i._id)))
@@ -181,7 +184,7 @@ export class CohortVisualizationProvider {
             value: 0,
           });
         }
-  
+
         _.forEach(active, (v, k) => {
           data1.push({
             date: d[0].daily,
@@ -233,22 +236,24 @@ async function getCustomersFromEs(params) {
  * @param data   {Object} (data from es)
  * @param period {Object} (group by [day or week or month])
  */
-function parseData(data,period){
+function parseData(data, period) {
   return _.chain(data)
-  .map(v =>
-    _.map(v.customer.buckets, x => ({
-      daily: moment(v.key_as_string).format('YYYY/MM/DD'),
-      weekly: `${moment(v.key_as_string).format('YYYY')}/${moment(v.key_as_string).isoWeeks()}`,
-      monthly: moment(v.key_as_string).format('YYYY/MM'),
-      yearly: moment(v.key_as_string).format('YYYY'),
-      date: v.key_as_string,
-      _id: x.key,
-      orderCount: _.get(x,'orderCount.value'),
-      total: _.get(x,'total.value')
-    }))
-  )
-  .flatten()
-  .groupBy(v => v[period])
-  .values()
-  .value();
+    .map(v =>
+      _.map(v.customer.buckets, x =>
+        _.map(x.orderCount.buckets, i => ({
+          daily: moment(v.key_as_string).format('YYYY/MM/DD'),
+          weekly: `${moment(v.key_as_string).format('YYYY')}/${moment(v.key_as_string).isoWeeks()}`,
+          monthly: moment(v.key_as_string).format('YYYY/MM'),
+          yearly: moment(v.key_as_string).format('YYYY'),
+          date: v.key_as_string,
+          _id: x.key,
+          orderCount: i.key,
+          total: _.get(i, 'total.value', 0),
+        }))
+      )
+    )
+    .flattenDeep()
+    .groupBy(v => v[period])
+    .values()
+    .value();
 }
