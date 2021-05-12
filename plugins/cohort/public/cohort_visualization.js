@@ -198,7 +198,7 @@ export class CohortVisualizationProvider {
         if (!active.length) {
           data1.push({
             date: d[0].daily,
-            total: _.sumBy(d, 'total'),
+            total: _.sumBy(newCust, 'total'),
             period: 1,
             value: 0,
           });
@@ -207,7 +207,7 @@ export class CohortVisualizationProvider {
         _.forEach(active, (v, k) => {
           data1.push({
             date: d[0].daily,
-            total: _.sumBy(d, 'total'),
+            total: _.sumBy(newCust, 'total'),
             period: k + 1,
             value: v,
           });
