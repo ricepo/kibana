@@ -148,8 +148,6 @@ export class CohortVisualizationProvider {
 
     const data3 = [];
 
-    const data4 = [];
-
     /**
      * data for customer 
      */
