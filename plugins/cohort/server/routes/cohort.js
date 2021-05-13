@@ -33,17 +33,13 @@ export default function(server) {
                   },
                   aggs: {
                     orderCount: {
-                      terms: {
+                      min: {
                         field: 'customer.orderCount',
-                        size: 1000000,
-                        order: { _count: 'desc' },
                       },
-                      aggs: {
-                        total: {
-                          sum: {
-                            field: 'total',
-                          },
-                        },
+                    },
+                    total: {
+                      sum: {
+                        field: 'total'
                       },
                     },
                   },
