@@ -13,4 +13,5 @@ cd ../restaurant_monthly_report/ && yarn build && \
 cd ../new_branch_report/ && yarn build && \
 cd ../active_customers_cohort/ && yarn build && \
 cd ../active_drivers_cohort/ && yarn build && \
+cd ../customer_visit_cohort/ && yarn build && \
 cd .. && docker build -t kibana .
