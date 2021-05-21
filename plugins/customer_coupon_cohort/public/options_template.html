@@ -76,4 +76,53 @@
     monthly
     </label>
   </div>
+
+  <!-- Coupon amount  -->
+
+  <div class="checkbox">
+    <label>
+      <input type="checkbox" ng-model="editorState.params.coupon">
+      Choose coupon amount
+    </label>
+  </div>
+  <div class="checkbox">
+    <label>
+      <input type="radio" ng-model="editorState.params.couponAmount" value="all"
+             ng-disabled="!editorState.params.coupon"
+             style="margin-left: 20px; margin-right: 4px;">
+      all
+    </label>
+  </div>
+  <div class="checkbox">
+    <label>
+      <input type="radio" ng-model="editorState.params.couponAmount" value=300
+             ng-disabled="!editorState.params.coupon"
+             style="margin-left: 20px; margin-right: 4px;">
+      3
+    </label>
+  </div>
+  <div class="checkbox">
+    <label>
+      <input type="radio" ng-model="editorState.params.couponAmount" value=500
+             ng-disabled="!editorState.params.coupon"
+             style="margin-left: 20px; margin-right: 4px;">
+      5
+    </label>
+  </div>
+  <div class="checkbox">
+    <label>
+      <input type="radio" ng-model="editorState.params.couponAmount" value=700
+             ng-disabled="!editorState.params.coupon"
+             style="margin-left: 20px; margin-right: 4px;">
+      7
+    </label>
+  </div>
+  <div class="checkbox">
+    <label>
+      <input type="radio" ng-model="editorState.params.couponAmount" value=1000
+             ng-disabled="!editorState.params.coupon"
+             style="margin-left: 20px; margin-right: 4px;">
+      10
+    </label>
+  </div>
 </div>

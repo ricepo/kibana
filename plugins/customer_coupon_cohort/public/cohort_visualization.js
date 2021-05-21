@@ -69,6 +69,9 @@ export class CustomerCouponCohortVisualizationProvider {
 
     const query = { bool };
 
+    /**
+     * Options for period
+     */
     let interval = null;
     let period = null;
     switch (visParams.period) {
@@ -89,6 +92,20 @@ export class CustomerCouponCohortVisualizationProvider {
         interval = '1w';
         break;
     }
+
+    /**
+     * Options for coupon amount
+     */
+    let couponAmount = 0;
+    switch (visParams.couponAmount) {
+      case 'all':
+        couponAmount = null;
+        break;
+      default:
+        couponAmount = _.toNumber(visParams.couponAmount);
+        break;
+    }
+
     const params = {
       query,
       interval,
@@ -110,18 +127,26 @@ export class CustomerCouponCohortVisualizationProvider {
 
       return;
     }
+
     esData = _.chain(esData)
       .map(v =>
-        _.map(v.customer.buckets, x => ({
-          daily: moment(v.key_as_string).format('YYYY/MM/DD'),
-          weekly: `${moment(v.key_as_string).format('YYYY')}/${moment(v.key_as_string).isoWeeks()}`,
-          monthly: moment(v.key_as_string).format('YYYY/MM'),
-          date: v.key_as_string,
-          _id: x.key,
-          coupon: _.find(x.coupon.buckets, c => /^AC-/.test(c.key)) ? 1 : 0,
-        }))
+        _.map(v.customer.buckets, x =>
+          _.map(x.coupon.buckets, c =>
+            _.map(c.amount.buckets, a => ({
+              daily: moment(v.key_as_string).format('YYYY/MM/DD'),
+              weekly: `${moment(v.key_as_string).format('YYYY')}/${moment(
+                v.key_as_string
+              ).isoWeeks()}`,
+              monthly: moment(v.key_as_string).format('YYYY/MM'),
+              date: v.key_as_string,
+              _id: x.key,
+              coupon: /^AC-/.test(c.key) ? 1 : 0,
+              amount: a.key,
+            }))
+          )
+        )
       )
-      .flatten()
+      .flattenDeep()
       .groupBy(v => v[period])
       .values()
       .value();
@@ -131,7 +156,11 @@ export class CustomerCouponCohortVisualizationProvider {
 
     _.map(esData, (d, day) => {
       /* Get number of the customers who use coupon which start with 'AC-' for the date */
-      const newCust = _.filter(d, ['coupon', 1]);
+      const newCust = _.chain(d)
+        .filter(v => v.coupon === 1 && (couponAmount ? v.amount === couponAmount : true))
+        .uniqBy('_id')
+        .value();
+
       const active = _(esData)
         .slice(day + 1) // Get the customer from date after init date
         .map(x => _.intersectionBy(newCust, x, '_id').length)
@@ -166,7 +195,14 @@ export class CustomerCouponCohortVisualizationProvider {
 
     const valueFn = getValueFunction(this.vis.params);
 
-    showTable(this.vis.params.mapColors, 'd', this.container, data, valueFn);
+    showTable(
+      this.vis.params.mapColors,
+      'd',
+      this.container,
+      data,
+      valueFn,
+      visParams.couponAmount
+    );
   }
 
   destroy() {

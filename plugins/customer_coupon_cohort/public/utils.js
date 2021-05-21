@@ -53,7 +53,7 @@ export const getFormatTypes = dateHistogram => formatTypes[dateHistogram];
  * @param {array} data
  * @param {function} valueFn
  */
-export function showTable(mapColors, dateHistogram, element, data, valueFn) {
+export function showTable(mapColors, dateHistogram, element, data, valueFn, amountOption) {
   const minMaxesForColumn = [];
   const periodMeans = d3
     .nest()
@@ -73,7 +73,7 @@ export function showTable(mapColors, dateHistogram, element, data, valueFn) {
       return mean;
     });
   const customColumn = dateHistogram ? 'Date' : 'Term';
-  const fixedColumns = [customColumn, 'Total'];
+  const fixedColumns = [customColumn, `Total-${amountOption}`];
   const columns = d3
     .map(data, d => d.period)
     .keys()

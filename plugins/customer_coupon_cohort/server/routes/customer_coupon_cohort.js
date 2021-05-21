@@ -41,6 +41,18 @@ export default function(server) {
                         missing: '__missing__',
                         size: 10000,
                       },
+                      aggs: {
+                        amount: {
+                          terms: {
+                            field: 'coupon.amount',
+                            order: {
+                              _count: 'desc',
+                            },
+                            missing: 0,
+                            size: 1000,
+                          },
+                        },
+                      },
                     },
                   },
                 },

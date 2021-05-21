@@ -11,7 +11,7 @@ import { setup } from '../../../src/legacy/core_plugins/visualizations/public/np
 export default function CustomerCouponCohortProvider(Private) {
   return visFactory.createBaseVisualization({
     name: 'customer_coupon_cohort',
-    title: 'Coupon Cohort Analysis',
+    title: 'Inactive coupon cohort',
     icon: 'stopFilled',
     description: 'Coupon Cohort analysis plugin',
     visualization: CustomerCouponCohortVisualizationProvider,
