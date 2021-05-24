@@ -145,23 +145,65 @@ export class CohortVisualizationProvider {
         .uniq()
         .value();
 
+      let restaurantData = [];
+      let menuData = [];
+      let quoteData = [];
+
+      _.chain(customerData)
+      .slice(day + 1) // Get the customer from date after init date
+      .map(x =>
+          _.map(x, i => {
+            if(!_.includes(customerIds, i._id)){
+              return 
+            }
+            if(i.type === 'restaurant'){
+              restaurantData.push(i)
+            }
+            if(i.type === 'menu'){
+              menuData.push(i)
+            }
+            if(/quote/.test(i.type)){
+              quoteData.push(i)
+            }
+          })
+      )
+      .value();
+
+      restaurantData = _.chain(restaurantData)
+        .groupBy(v => v[period])
+        .map(x => 
+          _.chain(x)
+          .uniqBy('_id')
+          .size()
+          .value()  
+        )    
+        .value()
+
+      menuData = _.chain(menuData)
+        .groupBy(v => v[period])
+        .map(x => 
+          _.chain(x)
+          .uniqBy('_id')
+          .size()
+          .value()  
+        )    
+        .value()
+
+      quoteData = _.chain(quoteData)
+        .groupBy(v => v[period])
+        .map(x => 
+          _.chain(x)
+          .uniqBy('_id')
+          .size()
+          .value()  
+        )    
+        .value()
       /**
        * table 1 - restaurant
        */
       {
-        const active = _(customerData)
-          .slice(day + 1) // Get the customer from date after init date
-          .map(x =>
-            _.chain(x)
-              .filter(i => _.includes(customerIds, i._id) && i.type === 'restaurant')
-              .uniqBy('_id')
-              .size()
-              .value()
-          )
-          .value();
-
         /* set value which is the last in Array */
-        if (!active.length) {
+        if (!restaurantData.length) {
           data.push({
             date: d[0].daily,
             total: customerIds.length,
@@ -170,7 +212,7 @@ export class CohortVisualizationProvider {
           });
         }
 
-        _.forEach(active, (v, k) => {
+        _.forEach(restaurantData, (v, k) => {
           data.push({
             date: d[0].daily,
             total: customerIds.length,
@@ -183,19 +225,8 @@ export class CohortVisualizationProvider {
        * table 2 - menu
        */
       {
-        const active = _(customerData)
-          .slice(day + 1) // Get the customer from date after init date
-          .map(x =>
-            _.chain(x)
-              .filter(i => _.includes(customerIds, i._id) && i.type === 'menu')
-              .uniqBy('_id')
-              .size()
-              .value()
-          )
-          .value();
-
         /* set value which is the last in Array */
-        if (!active.length) {
+        if (!menuData.length) {
           data1.push({
             date: d[0].daily,
             total: customerIds.length,
@@ -204,7 +235,7 @@ export class CohortVisualizationProvider {
           });
         }
 
-        _.forEach(active, (v, k) => {
+        _.forEach(menuData, (v, k) => {
           data1.push({
             date: d[0].daily,
             total: customerIds.length,
@@ -218,19 +249,8 @@ export class CohortVisualizationProvider {
        * table 3 - quote
        */
       {
-        const active = _(customerData)
-          .slice(day + 1) // Get the customer from date after init date
-          .map(x =>
-            _.chain(x)
-              .filter(i => _.includes(customerIds, i._id) && i.type === 'quote')
-              .uniqBy('_id')
-              .size()
-              .value()
-          )
-          .value();
-
         /* set value which is the last in Array */
-        if (!active.length) {
+        if (!quoteData.length) {
           data2.push({
             date: d[0].daily,
             total: customerIds.length,
@@ -239,7 +259,7 @@ export class CohortVisualizationProvider {
           });
         }
 
-        _.forEach(active, (v, k) => {
+        _.forEach(quoteData, (v, k) => {
           data2.push({
             date: d[0].daily,
             total: customerIds.length,
